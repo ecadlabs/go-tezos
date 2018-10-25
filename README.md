@@ -29,9 +29,11 @@ The best known RPC API docs are available here: http://tezos.gitlab.io/mainnet/
 
 ## Development
 
+### Running a tezos RPC node using docker-compose
+
 To run a local tezos RPC node using docker, run the following command:
 
-`docker run -it --rm --name tezos_node -p 8732:8732 tezos/tezos:alphanet tezos-node`
+`docker-compose up`
 
 The node will generate an identity and then, it will the chain from other nodes
 on the network. The process of synchronizing or downloading the chain can take
@@ -40,6 +42,17 @@ some time, but most of the RPC will work while this process completes.
 The `alphanet` image tag means you are not interacting with the live `mainnet`.
 You can connect to `mainnet` with the `tezos/tezos:mainnet` image, but it takes
 longer to sync.
+
+The `docker-compose.yml` file uses volumes, so when you restart the node, it
+won't have to regenerate an identity, or sync the entire chain.
+
+### Running a tezos RPC node using docker
+
+If you want to run a tezos node quickly, without using `docker-compose` try:
+
+`docker run -it --rm --name tezos_node -p 8732:8732 tezos/tezos:alphanet tezos-node`
+
+### Interacting with tezos RPC
 
 With the tezos-node docker image, you can test that the RPC interface is
 working:
