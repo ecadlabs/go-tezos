@@ -3,8 +3,6 @@
 
 go-tezos is a Go client library for Tezos RPC’s
 
---
-
 This client RPC library is in development and should be considered alpha.
 Contributors are welcome. We will start to tag releases of this library in
 November 2018.
