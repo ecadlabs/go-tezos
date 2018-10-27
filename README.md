@@ -8,7 +8,7 @@ Contributors are welcome. We will start to tag releases of this library in
 November 2018.
 
 The library will be useful to anyone wanting to build tools, products or
-services on top of the Tezos RPC API. 
+services on top of the Tezos RPC API.
 
 The library will be:
 
@@ -19,7 +19,7 @@ The library will be:
 
 # Tezos RPC Api documentation
 
-The best known RPC API docs are available here: http://tezos.gitlab.io/mainnet/ 
+The best known RPC API docs are available here: http://tezos.gitlab.io/mainnet/
 
 # Users of `go-tezos`
 

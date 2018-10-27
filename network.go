@@ -2,8 +2,8 @@ package tezos
 
 import (
 	"context"
-	"fmt"
 	"net/http"
+	"path"
 )
 
 // NetworkService is an interface for retrieving network stats from the tezos RPC api
@@ -19,9 +19,10 @@ type NetworkServiceOp struct {
 
 // GetStats returns current network stats https://tezos.gitlab.io/betanet/api/rpc.html#get-network-stat
 func (s *NetworkServiceOp) GetStats(ctx context.Context) (*NetworkStats, error) {
-	path := fmt.Sprintf("%s/%s", s.client.BaseURL, "/network/stat")
+	url := *s.client.BaseURL
+	url.Path = path.Join(url.Path, "/network/stat")
 
-	req, err := s.client.NewRequest(ctx, http.MethodGet, path, nil)
+	req, err := s.client.NewRequest(ctx, http.MethodGet, url.String(), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -37,7 +38,7 @@ func (s *NetworkServiceOp) GetStats(ctx context.Context) (*NetworkStats, error) 
 
 var _ NetworkService = &NetworkServiceOp{}
 
-//NetworkStats contains Global network bandwidth totals and usage in B/s
+// NetworkStats contains Global network bandwidth totals and usage in B/s.
 type NetworkStats struct {
 	TotalBytesSent int64 `json:"total_sent,string"`
 	TotalBytesRecv int64 `json:"total_recv,string"`

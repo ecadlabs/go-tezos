@@ -14,15 +14,15 @@ const (
 	mediaType      = "application/json"
 )
 
-// Client manages communication with a Tezos RPC
+// Client manages communication with a Tezos RPC.
 type Client struct {
-	//HTTP client used to comminicate with the DO API.
+	// HTTP client used to communicate with the Tezos node API.
 	client *http.Client
 
-	// Base URL for API requests
+	// Base URL for API requests.
 	BaseURL *url.URL
 
-	// User agent for clietn
+	// User agent name for client.
 	UserAgent string
 
 	Network NetworkService
