@@ -24,25 +24,24 @@ type ContractService interface {
 
 // Service implements fetching of information from Tezos nodes via JSON.
 type Service struct {
-	client *RPCClient
+	Client *RPCClient
 }
 
 var _ NetworkService = &Service{}
 var _ ContractService = &Service{}
 
 // GetStats returns current network stats https://tezos.gitlab.io/betanet/api/rpc.html#get-network-stat
-func (s *Service) GetStats(ctx context.Context) (*NetworkStats, error) {
-	url := *s.client.BaseURL
+func (s Service) GetStats(ctx context.Context) (*NetworkStats, error) {
+	url := *s.Client.BaseURL
 	url.Path = path.Join(url.Path, "/network/stat")
 
-	req, err := s.client.NewRequest(ctx, http.MethodGet, url.String(), nil)
+	req, err := s.Client.NewRequest(ctx, http.MethodGet, url.String(), nil)
 	if err != nil {
 		return nil, err
 	}
 
 	stats := new(NetworkStats)
-	//TODO make use of response, only works for GETs
-	err = s.client.Get(ctx, req, stats)
+	err = s.Client.Get(ctx, req, stats)
 	if err != nil {
 		return nil, err
 	}
@@ -50,17 +49,17 @@ func (s *Service) GetStats(ctx context.Context) (*NetworkStats, error) {
 }
 
 // GetConnections returns all network connections http://tezos.gitlab.io/mainnet/api/rpc.html#get-network-connections
-func (s *Service) GetConnections(ctx context.Context) ([]NetworkConnection, error) {
-	url := *s.client.BaseURL
+func (s Service) GetConnections(ctx context.Context) ([]NetworkConnection, error) {
+	url := *s.Client.BaseURL
 	url.Path = path.Join(url.Path, "/network/connections")
 
-	req, err := s.client.NewRequest(ctx, http.MethodGet, url.String(), nil)
+	req, err := s.Client.NewRequest(ctx, http.MethodGet, url.String(), nil)
 	if err != nil {
 		return nil, err
 	}
 
 	conns := []NetworkConnection{}
-	err = s.client.Get(ctx, req, &conns)
+	err = s.Client.Get(ctx, req, &conns)
 	if err != nil {
 		return nil, err
 	}
@@ -68,17 +67,17 @@ func (s *Service) GetConnections(ctx context.Context) ([]NetworkConnection, erro
 }
 
 // GetDelegateBalance returns a delegate's balance http://tezos.gitlab.io/mainnet/api/rpc.html#get-block-id-context-delegates-pkh-balance
-func (s *Service) GetDelegateBalance(ctx context.Context, chainID string, blockID string, pkh string) (string, error) {
-	url := *s.client.BaseURL
+func (s Service) GetDelegateBalance(ctx context.Context, chainID string, blockID string, pkh string) (string, error) {
+	url := *s.Client.BaseURL
 	url.Path = path.Join(url.Path, "chains", chainID, "blocks", blockID, "context/delegates", pkh, "balance")
 
-	req, err := s.client.NewRequest(ctx, http.MethodGet, url.String(), nil)
+	req, err := s.Client.NewRequest(ctx, http.MethodGet, url.String(), nil)
 	if err != nil {
 		return "", err
 	}
 
 	var balance string
-	err = s.client.Get(ctx, req, &balance)
+	err = s.Client.Get(ctx, req, &balance)
 	if err != nil {
 		return "", err
 	}
@@ -86,17 +85,17 @@ func (s *Service) GetDelegateBalance(ctx context.Context, chainID string, blockI
 }
 
 // GetContractBalance returns a contract's balance http://tezos.gitlab.io/mainnet/api/rpc.html#get-block-id-context-contracts-contract-id-balance
-func (s *Service) GetContractBalance(ctx context.Context, chainID string, blockID string, contractID string) (string, error) {
-	url := *s.client.BaseURL
+func (s Service) GetContractBalance(ctx context.Context, chainID string, blockID string, contractID string) (string, error) {
+	url := *s.Client.BaseURL
 	url.Path = path.Join(url.Path, "chains", chainID, "blocks", blockID, "context/contracts", contractID, "balance")
 
-	req, err := s.client.NewRequest(ctx, http.MethodGet, url.String(), nil)
+	req, err := s.Client.NewRequest(ctx, http.MethodGet, url.String(), nil)
 	if err != nil {
 		return "", err
 	}
 
 	var balance string
-	err = s.client.Get(ctx, req, &balance)
+	err = s.Client.Get(ctx, req, &balance)
 	if err != nil {
 		return "", err
 	}
