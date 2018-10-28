@@ -44,8 +44,8 @@ func (k *RPCErrorKind) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (k *RPCErrorKind) String() string {
-	switch *k {
+func (k RPCErrorKind) String() string {
+	switch k {
 	case Permanent:
 		return "permanent"
 	case Temporary:
@@ -63,7 +63,7 @@ type RPCError struct {
 	ID   string       `json:"id"`
 }
 
-func (k *RPCError) Error() string {
+func (k RPCError) Error() string {
 	return fmt.Sprintf("Tezos RPC error (kind = %q, id = %q)", k.Kind, k.ID)
 }
 
@@ -133,15 +133,22 @@ func (c *RPCClient) Get(ctx context.Context, req *http.Request, v interface{}) e
 		}
 	}()
 
-	switch resp.StatusCode / 100 {
-	case 4:
-		return fmt.Errorf("bad request: %s", resp.Status)
-	case 5:
-		// Attempt to parse 5xx errors according to http://tezos.gitlab.io/mainnet/api/errors.html.
-		var rpcErr RPCError
-		return json.NewDecoder(resp.Body).Decode(&rpcErr)
-	case 2:
+	switch resp.StatusCode {
+	case 200:
 		return json.NewDecoder(resp.Body).Decode(&v)
+	case 500:
+		// Attempt to parse 5xx errors according to http://tezos.gitlab.io/mainnet/api/errors.html.
+		var rpcErrs []RPCError
+		err := json.NewDecoder(resp.Body).Decode(&rpcErrs)
+		if err != nil {
+			return fmt.Errorf("error decoding Tezos RPC errors: %s", err)
+		}
+		if len(rpcErrs) == 0 {
+			return fmt.Errorf("received a Tezos RPC error response with 0 errors")
+		}
+		// TODO: For now, we just return the first error. Evaluate whether it's worth it
+		// to find a way to return multiple errors (if that can happen in practice).
+		return rpcErrs[0]
 	default:
 		return fmt.Errorf("unexpected response status: %s", resp.Status)
 	}
