@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/url"
 )
@@ -14,24 +15,60 @@ const (
 	mediaType      = "application/json"
 )
 
-// Client manages communication with a Tezos RPC
-type Client struct {
-	//HTTP client used to comminicate with the DO API.
-	client *http.Client
+// RPCErrorKind models the kind of Tezos RPC errors that exist.
+type RPCErrorKind int
 
-	// Base URL for API requests
-	BaseURL *url.URL
+const (
+	// Permanent Tezos RPC error kind.
+	Permanent RPCErrorKind = iota
+	// Temporary Tezos RPC error kind.
+	Temporary
+	// Branch Tezos RPC error kind.
+	Branch
+	// Unknown Tezos RPC error kind.
+	Unknown
+)
 
-	// User agent for clietn
-	UserAgent string
-
-	Network NetworkService
-	//TODO
-	// Injection InjectionService
+// UnmarshalJSON implements json.Unmarshaler.
+func (k *RPCErrorKind) UnmarshalJSON(data []byte) error {
+	switch string(data) {
+	case `"permanent"`:
+		*k = Permanent
+	case `"temporary"`:
+		*k = Temporary
+	case `"branch"`:
+		*k = Branch
+	default:
+		*k = Unknown
+	}
+	return nil
 }
 
-// NewRequest creates a Tezos RPC request
-func (c *Client) NewRequest(ctx context.Context, method, urlStr string, body interface{}) (*http.Request, error) {
+func (k RPCErrorKind) String() string {
+	switch k {
+	case Permanent:
+		return "permanent"
+	case Temporary:
+		return "temporary"
+	case Branch:
+		return "branch"
+	default:
+		return "unknown"
+	}
+}
+
+// RPCError is a Tezos RPC error as documented on http://tezos.gitlab.io/mainnet/api/errors.html.
+type RPCError struct {
+	Kind RPCErrorKind `json:"kind"`
+	ID   string       `json:"id"`
+}
+
+func (k RPCError) Error() string {
+	return fmt.Sprintf("Tezos RPC error (kind = %q, id = %q)", k.Kind, k.ID)
+}
+
+// NewRequest creates a Tezos RPC request.
+func (c *RPCClient) NewRequest(ctx context.Context, method, urlStr string, body interface{}) (*http.Request, error) {
 	rel, err := url.Parse(urlStr)
 	if err != nil {
 		return nil, err
@@ -59,8 +96,18 @@ func (c *Client) NewRequest(ctx context.Context, method, urlStr string, body int
 
 }
 
-// NewClient returns a new Tezos RPC client
-func NewClient(httpClient *http.Client, baseURL string) (*Client, error) {
+// RPCClient manages communication with a Tezos RPC server.
+type RPCClient struct {
+	// HTTP client used to communicate with the Tezos node API.
+	client *http.Client
+	// Base URL for API requests.
+	BaseURL *url.URL
+	// User agent name for client.
+	UserAgent string
+}
+
+// NewRPCClient returns a new Tezos RPC client.
+func NewRPCClient(httpClient *http.Client, baseURL string) (*RPCClient, error) {
 	if httpClient == nil {
 		httpClient = http.DefaultClient
 	}
@@ -69,16 +116,15 @@ func NewClient(httpClient *http.Client, baseURL string) (*Client, error) {
 		return nil, err
 	}
 
-	c := &Client{client: httpClient, BaseURL: u, UserAgent: userAgent}
-	c.Network = &NetworkServiceOp{client: c}
+	c := &RPCClient{client: httpClient, BaseURL: u, UserAgent: userAgent}
 	return c, nil
 }
 
-// Do sends an API request and returns an API response
-func (c *Client) Do(ctx context.Context, req *http.Request, v interface{}) (*http.Response, error) {
+// Get retrieves values from the API and marshals them into the provided interface.
+func (c *RPCClient) Get(ctx context.Context, req *http.Request, v interface{}) error {
 	resp, err := c.client.Do(req.WithContext(ctx))
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	defer func() {
@@ -86,8 +132,24 @@ func (c *Client) Do(ctx context.Context, req *http.Request, v interface{}) (*htt
 			err = rerr
 		}
 	}()
-	err = json.NewDecoder(resp.Body).Decode(&v)
 
-	// TODO: check HTTP response codes and handle
-	return resp, err
+	switch resp.StatusCode {
+	case 200:
+		return json.NewDecoder(resp.Body).Decode(&v)
+	case 500:
+		// Attempt to parse 5xx errors according to http://tezos.gitlab.io/mainnet/api/errors.html.
+		var rpcErrs []RPCError
+		err := json.NewDecoder(resp.Body).Decode(&rpcErrs)
+		if err != nil {
+			return fmt.Errorf("error decoding Tezos RPC errors: %s", err)
+		}
+		if len(rpcErrs) == 0 {
+			return fmt.Errorf("received a Tezos RPC error response with 0 errors")
+		}
+		// TODO: For now, we just return the first error. Evaluate whether it's worth it
+		// to find a way to return multiple errors (if that can happen in practice).
+		return rpcErrs[0]
+	default:
+		return fmt.Errorf("unexpected response status: %s", resp.Status)
+	}
 }
