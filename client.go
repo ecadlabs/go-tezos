@@ -4,7 +4,9 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"net/url"
 )
@@ -15,57 +17,57 @@ const (
 	mediaType      = "application/json"
 )
 
-// RPCErrorKind models the kind of Tezos RPC errors that exist.
-type RPCErrorKind int
-
 const (
-	// Permanent Tezos RPC error kind.
-	Permanent RPCErrorKind = iota
-	// Temporary Tezos RPC error kind.
-	Temporary
-	// Branch Tezos RPC error kind.
-	Branch
-	// Unknown Tezos RPC error kind.
-	Unknown
+	// ErrorKindPermanent Tezos RPC error kind.
+	ErrorKindPermanent = "permanent"
+	// ErrorKindTemporary Tezos RPC error kind.
+	ErrorKindTemporary = "temporary"
+	// ErrorKindBranch Tezos RPC error kind.
+	ErrorKindBranch = "branch"
 )
 
-// UnmarshalJSON implements json.Unmarshaler.
-func (k *RPCErrorKind) UnmarshalJSON(data []byte) error {
-	switch string(data) {
-	case `"permanent"`:
-		*k = Permanent
-	case `"temporary"`:
-		*k = Temporary
-	case `"branch"`:
-		*k = Branch
-	default:
-		*k = Unknown
-	}
-	return nil
+// HTTPError retains HTTP status
+type HTTPError interface {
+	Status() string  // e.g. "200 OK"
+	StatusCode() int // e.g. 200
+	Body() []byte
 }
 
-func (k RPCErrorKind) String() string {
-	switch k {
-	case Permanent:
-		return "permanent"
-	case Temporary:
-		return "temporary"
-	case Branch:
-		return "branch"
-	default:
-		return "unknown"
-	}
+type httpError struct {
+	status     string
+	statusCode int
+	body       []byte
+}
+
+func (e *httpError) Error() string {
+	return fmt.Sprintf("tezos: HTTP status %v)", e.statusCode)
+}
+
+func (e *httpError) Status() string {
+	return e.status
+}
+
+func (e *httpError) StatusCode() int {
+	return e.statusCode
+}
+
+func (e *httpError) Body() []byte {
+	return e.body
 }
 
 // RPCError is a Tezos RPC error as documented on http://tezos.gitlab.io/mainnet/api/errors.html.
 type RPCError struct {
-	Kind RPCErrorKind `json:"kind"`
-	ID   string       `json:"id"`
+	*httpError
+	ID   string
+	Kind string // e.g. "permanent"
+	Raw  map[string]interface{}
 }
 
-func (k RPCError) Error() string {
-	return fmt.Sprintf("Tezos RPC error (kind = %q, id = %q)", k.Kind, k.ID)
+func (e *RPCError) Error() string {
+	return fmt.Sprintf("tezos: RPC error (kind = %q, id = %q)", e.Kind, e.ID)
 }
+
+var _ HTTPError = &RPCError{}
 
 // NewRequest creates a Tezos RPC request.
 func (c *RPCClient) NewRequest(ctx context.Context, method, urlStr string, body interface{}) (*http.Request, error) {
@@ -92,8 +94,8 @@ func (c *RPCClient) NewRequest(ctx context.Context, method, urlStr string, body 
 	req.Header.Add("Content-Type", mediaType)
 	req.Header.Add("Accept", mediaType)
 	req.Header.Add("User-Agent", c.UserAgent)
-	return req, nil
 
+	return req, nil
 }
 
 // RPCClient manages communication with a Tezos RPC server.
@@ -120,8 +122,10 @@ func NewRPCClient(httpClient *http.Client, baseURL string) (*RPCClient, error) {
 	return c, nil
 }
 
+var errErrDecoding = errors.New("tezos: error decoding RPC error")
+
 // Get retrieves values from the API and marshals them into the provided interface.
-func (c *RPCClient) Get(ctx context.Context, req *http.Request, v interface{}) error {
+func (c *RPCClient) Get(ctx context.Context, req *http.Request, v interface{}) (err error) {
 	resp, err := c.client.Do(req.WithContext(ctx))
 	if err != nil {
 		return err
@@ -133,23 +137,50 @@ func (c *RPCClient) Get(ctx context.Context, req *http.Request, v interface{}) e
 		}
 	}()
 
-	switch resp.StatusCode {
-	case 200:
+	statusClass := resp.StatusCode / 100
+	if statusClass == 2 {
+		// Normal return
 		return json.NewDecoder(resp.Body).Decode(&v)
-	case 500:
-		// Attempt to parse 5xx errors according to http://tezos.gitlab.io/mainnet/api/errors.html.
-		var rpcErrs []RPCError
-		err := json.NewDecoder(resp.Body).Decode(&rpcErrs)
-		if err != nil {
-			return fmt.Errorf("error decoding Tezos RPC errors: %s", err)
-		}
-		if len(rpcErrs) == 0 {
-			return fmt.Errorf("received a Tezos RPC error response with 0 errors")
-		}
-		// TODO: For now, we just return the first error. Evaluate whether it's worth it
-		// to find a way to return multiple errors (if that can happen in practice).
-		return rpcErrs[0]
-	default:
-		return fmt.Errorf("unexpected response status: %s", resp.Status)
 	}
+
+	// Handle errors
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return err
+	}
+
+	httpErr := httpError{
+		status:     resp.Status,
+		statusCode: resp.StatusCode,
+		body:       body,
+	}
+
+	if statusClass != 5 {
+		// Other errors with unknown body format (usually human readable string)
+		return &httpErr
+	}
+
+	var rawError map[string]interface{}
+	if err = json.Unmarshal(body, &rawError); err != nil {
+		return fmt.Errorf("tezos: error decoding RPC error: %v", err)
+	}
+
+	errID, ok := rawError["id"].(string)
+	if !ok {
+		return errErrDecoding
+	}
+
+	errKind, ok := rawError["kind"].(string)
+	if !ok {
+		return errErrDecoding
+	}
+
+	rpcErr := RPCError{
+		httpError: &httpErr,
+		ID:        errID,
+		Kind:      errKind,
+		Raw:       rawError,
+	}
+
+	return &rpcErr
 }
