@@ -5,9 +5,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"reflect"
 	"strings"
 )
 
@@ -173,6 +175,10 @@ func (c *RPCClient) NewRequest(ctx context.Context, method, urlStr string, body 
 	req.Header.Add("Accept", mediaType)
 	req.Header.Add("User-Agent", c.UserAgent)
 
+	if ctx != nil {
+		return req.WithContext(ctx), nil
+	}
+
 	return req, nil
 }
 
@@ -201,8 +207,8 @@ func NewRPCClient(httpClient *http.Client, baseURL string) (*RPCClient, error) {
 }
 
 // Get retrieves values from the API and marshals them into the provided interface.
-func (c *RPCClient) Get(ctx context.Context, req *http.Request, v interface{}) (err error) {
-	resp, err := c.client.Do(req.WithContext(ctx))
+func (c *RPCClient) Get(req *http.Request, v interface{}) (err error) {
+	resp, err := c.client.Do(req)
 	if err != nil {
 		return err
 	}
@@ -217,10 +223,56 @@ func (c *RPCClient) Get(ctx context.Context, req *http.Request, v interface{}) (
 		return nil
 	}
 
+	httpErr := httpError{
+		status:     resp.Status,
+		statusCode: resp.StatusCode,
+	}
+
 	statusClass := resp.StatusCode / 100
 	if statusClass == 2 {
 		// Normal return
-		return json.NewDecoder(resp.Body).Decode(&v)
+		dec := json.NewDecoder(resp.Body)
+		typ := reflect.TypeOf(v)
+
+		if typ.Kind() == reflect.Chan {
+			// Handle channel
+			ctx := req.Context()
+
+			cases := []reflect.SelectCase{
+				reflect.SelectCase{
+					Dir:  reflect.SelectSend,
+					Chan: reflect.ValueOf(v),
+				},
+				reflect.SelectCase{
+					Dir:  reflect.SelectRecv,
+					Chan: reflect.ValueOf(ctx.Done()),
+				},
+			}
+
+			for {
+				chunkVal := reflect.New(typ.Elem())
+
+				if err := dec.Decode(chunkVal.Interface()); err != nil {
+					if err == io.EOF {
+						break
+					}
+					return &plainError{&httpErr, err.Error()}
+				}
+
+				cases[0].Send = chunkVal.Elem()
+				if chosen, _, _ := reflect.Select(cases); chosen == 1 {
+					return ctx.Err()
+				}
+			}
+
+			return nil
+		}
+
+		if err := dec.Decode(&v); err != nil {
+			return &plainError{&httpErr, err.Error()}
+		}
+
+		return nil
 	}
 
 	// Handle errors
@@ -228,12 +280,7 @@ func (c *RPCClient) Get(ctx context.Context, req *http.Request, v interface{}) (
 	if err != nil {
 		return err
 	}
-
-	httpErr := httpError{
-		status:     resp.Status,
-		statusCode: resp.StatusCode,
-		body:       body,
-	}
+	httpErr.body = body
 
 	if statusClass != 5 || !strings.Contains(resp.Header.Get("Content-Type"), "application/json") {
 		// Other errors with unknown body format (usually human readable string)
@@ -241,7 +288,7 @@ func (c *RPCClient) Get(ctx context.Context, req *http.Request, v interface{}) (
 	}
 
 	var raw interface{}
-	if err = json.Unmarshal(body, &raw); err != nil {
+	if err := json.Unmarshal(body, &raw); err != nil {
 		return &plainError{&httpErr, fmt.Sprintf("tezos: error decoding RPC error: %v", err)}
 	}
 

@@ -6,9 +6,17 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 )
+
+func timeMustUnmarshalText(text string) (t time.Time) {
+	if err := t.UnmarshalText([]byte(text)); err != nil {
+		panic(err)
+	}
+	return
+}
 
 func TestServiceGetMethods(t *testing.T) {
 	ctx := context.Background()
@@ -58,6 +66,29 @@ func TestServiceGetMethods(t *testing.T) {
 			respContentType: "application/json",
 			expectedPath:    "/chains/main/blocks/head/context/contracts/tz3WXYtyDUNL91qfiCJtVUX746QpNv5i5ve5/balance",
 			expectedValue:   "4700354460878",
+		},
+		{
+			get: func(s *Service) (interface{}, error) {
+				ch := make(chan *BootstrappedBlock, 1000)
+				if err := s.GetBootstrapped(ctx, ch); err != nil {
+					return nil, err
+				}
+				close(ch)
+
+				var res []*BootstrappedBlock
+				for b := range ch {
+					res = append(res, b)
+				}
+				return res, nil
+			},
+			respFixture:     "fixtures/monitor/bootstrapped.chunked",
+			respContentType: "application/json",
+			expectedPath:    "/monitor/bootstrapped",
+			expectedValue: []*BootstrappedBlock{
+				&BootstrappedBlock{Block: "BLgz6z8w5bYtn2AAEmsfMD3aH9o8SUnVygUpVUsCe6dkRpEt5Qy", Timestamp: timeMustUnmarshalText("2018-09-17T00:46:12Z")},
+				&BootstrappedBlock{Block: "BLc3Y6zsb7PT6QnScu8VKcUPGkCoeCLPWLVTQoQjk5QQ7pbmHs5", Timestamp: timeMustUnmarshalText("2018-09-17T00:46:42Z")},
+				&BootstrappedBlock{Block: "BKiqiXgqAPHX4bRzk2p1jEKHijaxLPdcQi8hqVfGhBwngcticEk", Timestamp: timeMustUnmarshalText("2018-09-17T00:48:32Z")},
+			},
 		},
 		// Handling 5xx errors from the Tezos node with RPC error information.
 		{

@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 	"path"
+	"time"
 )
 
 // NetworkService is an interface for retrieving network stats from the Tezos RPC API.
@@ -22,84 +23,14 @@ type ContractService interface {
 	GetContractBalance(ctx context.Context, chainID string, blockID string, contractID string) (string, error)
 }
 
+// MonitorService is an interface for accessing streamed information from the Tezos RPC API.
+type MonitorService interface {
+	GetBootstrapped(ctx context.Context, results chan<- *BootstrappedBlock) error
+}
+
 // Service implements fetching of information from Tezos nodes via JSON.
 type Service struct {
 	Client *RPCClient
-}
-
-var _ NetworkService = &Service{}
-var _ ContractService = &Service{}
-
-// GetStats returns current network stats https://tezos.gitlab.io/betanet/api/rpc.html#get-network-stat
-func (s Service) GetStats(ctx context.Context) (*NetworkStats, error) {
-	url := *s.Client.BaseURL
-	url.Path = path.Join(url.Path, "/network/stat")
-
-	req, err := s.Client.NewRequest(ctx, http.MethodGet, url.String(), nil)
-	if err != nil {
-		return nil, err
-	}
-
-	stats := new(NetworkStats)
-	err = s.Client.Get(ctx, req, stats)
-	if err != nil {
-		return nil, err
-	}
-	return stats, err
-}
-
-// GetConnections returns all network connections http://tezos.gitlab.io/mainnet/api/rpc.html#get-network-connections
-func (s Service) GetConnections(ctx context.Context) ([]NetworkConnection, error) {
-	url := *s.Client.BaseURL
-	url.Path = path.Join(url.Path, "/network/connections")
-
-	req, err := s.Client.NewRequest(ctx, http.MethodGet, url.String(), nil)
-	if err != nil {
-		return nil, err
-	}
-
-	conns := []NetworkConnection{}
-	err = s.Client.Get(ctx, req, &conns)
-	if err != nil {
-		return nil, err
-	}
-	return conns, err
-}
-
-// GetDelegateBalance returns a delegate's balance http://tezos.gitlab.io/mainnet/api/rpc.html#get-block-id-context-delegates-pkh-balance
-func (s Service) GetDelegateBalance(ctx context.Context, chainID string, blockID string, pkh string) (string, error) {
-	url := *s.Client.BaseURL
-	url.Path = path.Join(url.Path, "chains", chainID, "blocks", blockID, "context/delegates", pkh, "balance")
-
-	req, err := s.Client.NewRequest(ctx, http.MethodGet, url.String(), nil)
-	if err != nil {
-		return "", err
-	}
-
-	var balance string
-	err = s.Client.Get(ctx, req, &balance)
-	if err != nil {
-		return "", err
-	}
-	return balance, err
-}
-
-// GetContractBalance returns a contract's balance http://tezos.gitlab.io/mainnet/api/rpc.html#get-block-id-context-contracts-contract-id-balance
-func (s Service) GetContractBalance(ctx context.Context, chainID string, blockID string, contractID string) (string, error) {
-	url := *s.Client.BaseURL
-	url.Path = path.Join(url.Path, "chains", chainID, "blocks", blockID, "context/contracts", contractID, "balance")
-
-	req, err := s.Client.NewRequest(ctx, http.MethodGet, url.String(), nil)
-	if err != nil {
-		return "", err
-	}
-
-	var balance string
-	err = s.Client.Get(ctx, req, &balance)
-	if err != nil {
-		return "", err
-	}
-	return balance, err
 }
 
 // NetworkStats models global network bandwidth totals and usage in B/s.
@@ -140,3 +71,100 @@ type NetworkMetadata struct {
 	DisableMempool bool `json:"disable_mempool"`
 	PrivateNode    bool `json:"private_node"`
 }
+
+// BootstrappedBlock represents bootstrapped block stream message
+type BootstrappedBlock struct {
+	Block     string    `json:"block"`
+	Timestamp time.Time `json:"timestamp"`
+}
+
+// GetStats returns current network stats https://tezos.gitlab.io/betanet/api/rpc.html#get-network-stat
+func (s *Service) GetStats(ctx context.Context) (*NetworkStats, error) {
+	url := *s.Client.BaseURL
+	url.Path = path.Join(url.Path, "/network/stat")
+
+	req, err := s.Client.NewRequest(ctx, http.MethodGet, url.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	stats := new(NetworkStats)
+	err = s.Client.Get(req, stats)
+	if err != nil {
+		return nil, err
+	}
+	return stats, err
+}
+
+// GetConnections returns all network connections http://tezos.gitlab.io/mainnet/api/rpc.html#get-network-connections
+func (s *Service) GetConnections(ctx context.Context) ([]NetworkConnection, error) {
+	url := *s.Client.BaseURL
+	url.Path = path.Join(url.Path, "/network/connections")
+
+	req, err := s.Client.NewRequest(ctx, http.MethodGet, url.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	conns := []NetworkConnection{}
+	err = s.Client.Get(req, &conns)
+	if err != nil {
+		return nil, err
+	}
+	return conns, err
+}
+
+// GetDelegateBalance returns a delegate's balance http://tezos.gitlab.io/mainnet/api/rpc.html#get-block-id-context-delegates-pkh-balance
+func (s *Service) GetDelegateBalance(ctx context.Context, chainID string, blockID string, pkh string) (string, error) {
+	url := *s.Client.BaseURL
+	url.Path = path.Join(url.Path, "chains", chainID, "blocks", blockID, "context/delegates", pkh, "balance")
+
+	req, err := s.Client.NewRequest(ctx, http.MethodGet, url.String(), nil)
+	if err != nil {
+		return "", err
+	}
+
+	var balance string
+	err = s.Client.Get(req, &balance)
+	if err != nil {
+		return "", err
+	}
+	return balance, err
+}
+
+// GetContractBalance returns a contract's balance http://tezos.gitlab.io/mainnet/api/rpc.html#get-block-id-context-contracts-contract-id-balance
+func (s *Service) GetContractBalance(ctx context.Context, chainID string, blockID string, contractID string) (string, error) {
+	url := *s.Client.BaseURL
+	url.Path = path.Join(url.Path, "chains", chainID, "blocks", blockID, "context/contracts", contractID, "balance")
+
+	req, err := s.Client.NewRequest(ctx, http.MethodGet, url.String(), nil)
+	if err != nil {
+		return "", err
+	}
+
+	var balance string
+	err = s.Client.Get(req, &balance)
+	if err != nil {
+		return "", err
+	}
+	return balance, err
+}
+
+// GetBootstrapped reads from the bootstrapped blocks stream http://tezos.gitlab.io/mainnet/api/rpc.html#get-monitor-bootstrapped
+func (s *Service) GetBootstrapped(ctx context.Context, results chan<- *BootstrappedBlock) error {
+	url := *s.Client.BaseURL
+	url.Path = path.Join(url.Path, "monitor", "bootstrapped")
+
+	req, err := s.Client.NewRequest(ctx, http.MethodGet, url.String(), nil)
+	if err != nil {
+		return err
+	}
+
+	return s.Client.Get(req, results)
+}
+
+var (
+	_ NetworkService  = &Service{}
+	_ ContractService = &Service{}
+	_ MonitorService  = &Service{}
+)
