@@ -4,11 +4,11 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"strings"
 )
 
 const (
@@ -28,9 +28,19 @@ const (
 
 // HTTPError retains HTTP status
 type HTTPError interface {
+	error
 	Status() string  // e.g. "200 OK"
 	StatusCode() int // e.g. 200
 	Body() []byte
+}
+
+// RPCError is a Tezos RPC error as documented on http://tezos.gitlab.io/mainnet/api/errors.html.
+type RPCError interface {
+	HTTPError
+	ID() string
+	Kind() string // e.g. "permanent"
+	Raw() map[string]interface{}
+	Errors() []RPCError // returns all errors as a slice
 }
 
 type httpError struct {
@@ -40,7 +50,7 @@ type httpError struct {
 }
 
 func (e *httpError) Error() string {
-	return fmt.Sprintf("tezos: HTTP status %v)", e.statusCode)
+	return fmt.Sprintf("tezos: HTTP status %v", e.statusCode)
 }
 
 func (e *httpError) Status() string {
@@ -55,19 +65,87 @@ func (e *httpError) Body() []byte {
 	return e.body
 }
 
-// RPCError is a Tezos RPC error as documented on http://tezos.gitlab.io/mainnet/api/errors.html.
-type RPCError struct {
+type rpcError struct {
 	*httpError
-	ID   string
-	Kind string // e.g. "permanent"
-	Raw  map[string]interface{}
+	id   string
+	kind string // e.g. "permanent"
+	raw  map[string]interface{}
 }
 
-func (e *RPCError) Error() string {
-	return fmt.Sprintf("tezos: RPC error (kind = %q, id = %q)", e.Kind, e.ID)
+func (e *rpcError) Error() string {
+	return fmt.Sprintf("tezos: RPC error (kind = %q, id = %q)", e.kind, e.id)
 }
 
-var _ HTTPError = &RPCError{}
+func (e *rpcError) ID() string {
+	return e.id
+}
+
+func (e *rpcError) Kind() string {
+	return e.kind
+}
+
+func (e *rpcError) Raw() map[string]interface{} {
+	return e.raw
+}
+
+func (e *rpcError) Errors() []RPCError {
+	return []RPCError{e}
+}
+
+type rpcErrors struct {
+	*httpError
+	errors []*rpcError
+}
+
+func (e *rpcErrors) Error() string {
+	if len(e.errors) == 0 {
+		return ""
+	}
+	return e.errors[0].Error()
+}
+
+func (e *rpcErrors) ID() string {
+	if len(e.errors) == 0 {
+		return ""
+	}
+	return e.errors[0].id
+}
+
+func (e *rpcErrors) Kind() string {
+	if len(e.errors) == 0 {
+		return ""
+	}
+	return e.errors[0].kind
+}
+
+func (e *rpcErrors) Raw() map[string]interface{} {
+	if len(e.errors) == 0 {
+		return nil
+	}
+	return e.errors[0].raw
+}
+
+func (e *rpcErrors) Errors() []RPCError {
+	res := make([]RPCError, len(e.errors))
+	for i := range e.errors {
+		res[i] = e.errors[i]
+	}
+	return res
+}
+
+type plainError struct {
+	*httpError
+	msg string
+}
+
+func (e *plainError) Error() string {
+	return e.msg
+}
+
+var (
+	_ RPCError = &rpcErrors{}
+	_ RPCError = &rpcError{}
+)
 
 // NewRequest creates a Tezos RPC request.
 func (c *RPCClient) NewRequest(ctx context.Context, method, urlStr string, body interface{}) (*http.Request, error) {
@@ -122,8 +200,6 @@ func NewRPCClient(httpClient *http.Client, baseURL string) (*RPCClient, error) {
 	return c, nil
 }
 
-var errErrDecoding = errors.New("tezos: error decoding RPC error")
-
 // Get retrieves values from the API and marshals them into the provided interface.
 func (c *RPCClient) Get(ctx context.Context, req *http.Request, v interface{}) (err error) {
 	resp, err := c.client.Do(req.WithContext(ctx))
@@ -136,6 +212,10 @@ func (c *RPCClient) Get(ctx context.Context, req *http.Request, v interface{}) (
 			err = rerr
 		}
 	}()
+
+	if resp.StatusCode == http.StatusNoContent {
+		return nil
+	}
 
 	statusClass := resp.StatusCode / 100
 	if statusClass == 2 {
@@ -155,32 +235,61 @@ func (c *RPCClient) Get(ctx context.Context, req *http.Request, v interface{}) (
 		body:       body,
 	}
 
-	if statusClass != 5 {
+	if statusClass != 5 || !strings.Contains(resp.Header.Get("Content-Type"), "application/json") {
 		// Other errors with unknown body format (usually human readable string)
 		return &httpErr
 	}
 
-	var rawError map[string]interface{}
-	if err = json.Unmarshal(body, &rawError); err != nil {
-		return fmt.Errorf("tezos: error decoding RPC error: %v", err)
+	var raw interface{}
+	if err = json.Unmarshal(body, &raw); err != nil {
+		return &plainError{&httpErr, fmt.Sprintf("tezos: error decoding RPC error: %v", err)}
 	}
 
-	errID, ok := rawError["id"].(string)
-	if !ok {
-		return errErrDecoding
+	// Can be an array
+	var maps []map[string]interface{}
+
+	switch e := raw.(type) {
+	case []interface{}:
+		for _, v := range e {
+			if m, ok := v.(map[string]interface{}); ok {
+				maps = append(maps, m)
+			}
+		}
+
+	case map[string]interface{}:
+		maps = []map[string]interface{}{e}
+
+	default:
+		return &plainError{&httpErr, "tezos: error decoding RPC error"}
 	}
 
-	errKind, ok := rawError["kind"].(string)
-	if !ok {
-		return errErrDecoding
+	if len(maps) == 0 {
+		return &plainError{&httpErr, "tezos: empty error response"}
 	}
 
-	rpcErr := RPCError{
+	errs := make([]*rpcError, len(maps))
+
+	for i, m := range maps {
+		errID, ok := m["id"].(string)
+		if !ok {
+			return &plainError{&httpErr, "tezos: error decoding RPC error"}
+		}
+
+		errKind, ok := m["kind"].(string)
+		if !ok {
+			return &plainError{&httpErr, "tezos: error decoding RPC error"}
+		}
+
+		errs[i] = &rpcError{
+			httpError: &httpErr,
+			id:        errID,
+			kind:      errKind,
+			raw:       m,
+		}
+	}
+
+	return &rpcErrors{
 		httpError: &httpErr,
-		ID:        errID,
-		Kind:      errKind,
-		Raw:       rawError,
+		errors:    errs,
 	}
-
-	return &rpcErr
 }
