@@ -252,7 +252,7 @@ func (c *RPCClient) Get(req *http.Request, v interface{}) (err error) {
 			for {
 				chunkVal := reflect.New(typ.Elem())
 
-				if err := dec.Decode(chunkVal.Interface()); err != nil {
+				if err = dec.Decode(chunkVal.Interface()); err != nil {
 					if err == io.EOF {
 						break
 					}
@@ -268,7 +268,7 @@ func (c *RPCClient) Get(req *http.Request, v interface{}) (err error) {
 			return nil
 		}
 
-		if err := dec.Decode(&v); err != nil {
+		if err = dec.Decode(&v); err != nil {
 			return &plainError{&httpErr, err.Error()}
 		}
 
