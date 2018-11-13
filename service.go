@@ -7,27 +7,6 @@ import (
 	"time"
 )
 
-// NetworkService is an interface for retrieving network stats from the Tezos RPC API.
-type NetworkService interface {
-	// GetStats implements https://tezos.gitlab.io/betanet/api/rpc.html#get-network-stat.
-	GetStats(context.Context) (*NetworkStats, error)
-	// GetConnections implements http://tezos.gitlab.io/mainnet/api/rpc.html#get-network-connections.
-	GetConnections(context.Context) ([]NetworkConnection, error)
-}
-
-// ContractService is an interface for retrieving contract-related information from the Tezos RPC API.
-type ContractService interface {
-	// GetDelegateBalance implements http://tezos.gitlab.io/mainnet/api/rpc.html#get-block-id-context-delegates-pkh-balance.
-	GetDelegateBalance(ctx context.Context, chainID string, blockID string, pkh string) (string, error)
-	// GetContractBalance implements http://tezos.gitlab.io/mainnet/api/rpc.html#get-block-id-context-contracts-contract-id-balance.
-	GetContractBalance(ctx context.Context, chainID string, blockID string, contractID string) (string, error)
-}
-
-// MonitorService is an interface for accessing streamed information from the Tezos RPC API.
-type MonitorService interface {
-	GetBootstrapped(ctx context.Context, results chan<- *BootstrappedBlock) error
-}
-
 // Service implements fetching of information from Tezos nodes via JSON.
 type Service struct {
 	Client *RPCClient
@@ -162,9 +141,3 @@ func (s *Service) GetBootstrapped(ctx context.Context, results chan<- *Bootstrap
 
 	return s.Client.Get(req, results)
 }
-
-var (
-	_ NetworkService  = &Service{}
-	_ ContractService = &Service{}
-	_ MonitorService  = &Service{}
-)
