@@ -206,6 +206,51 @@ func NewRPCClient(httpClient *http.Client, baseURL string) (*RPCClient, error) {
 	return c, nil
 }
 
+func (c *RPCClient) handleNormalResponse(ctx context.Context, resp *http.Response, v interface{}) error {
+	// Normal return
+	dec := json.NewDecoder(resp.Body)
+	typ := reflect.TypeOf(v)
+
+	if typ.Kind() == reflect.Chan {
+		// Handle channel
+		cases := []reflect.SelectCase{
+			reflect.SelectCase{
+				Dir:  reflect.SelectSend,
+				Chan: reflect.ValueOf(v),
+			},
+			reflect.SelectCase{
+				Dir:  reflect.SelectRecv,
+				Chan: reflect.ValueOf(ctx.Done()),
+			},
+		}
+
+		for {
+			chunkVal := reflect.New(typ.Elem())
+
+			if err := dec.Decode(chunkVal.Interface()); err != nil {
+				if err == io.EOF {
+					break
+				}
+				return err
+			}
+
+			cases[0].Send = chunkVal.Elem()
+			if chosen, _, _ := reflect.Select(cases); chosen == 1 {
+				return ctx.Err()
+			}
+		}
+
+		return nil
+	}
+
+	// Handle single object
+	if err := dec.Decode(&v); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // Get retrieves values from the API and marshals them into the provided interface.
 func (c *RPCClient) Get(req *http.Request, v interface{}) (err error) {
 	resp, err := c.client.Do(req)
@@ -223,56 +268,9 @@ func (c *RPCClient) Get(req *http.Request, v interface{}) (err error) {
 		return nil
 	}
 
-	httpErr := httpError{
-		status:     resp.Status,
-		statusCode: resp.StatusCode,
-	}
-
 	statusClass := resp.StatusCode / 100
 	if statusClass == 2 {
-		// Normal return
-		dec := json.NewDecoder(resp.Body)
-		typ := reflect.TypeOf(v)
-
-		if typ.Kind() == reflect.Chan {
-			// Handle channel
-			ctx := req.Context()
-
-			cases := []reflect.SelectCase{
-				reflect.SelectCase{
-					Dir:  reflect.SelectSend,
-					Chan: reflect.ValueOf(v),
-				},
-				reflect.SelectCase{
-					Dir:  reflect.SelectRecv,
-					Chan: reflect.ValueOf(ctx.Done()),
-				},
-			}
-
-			for {
-				chunkVal := reflect.New(typ.Elem())
-
-				if err = dec.Decode(chunkVal.Interface()); err != nil {
-					if err == io.EOF {
-						break
-					}
-					return &plainError{&httpErr, err.Error()}
-				}
-
-				cases[0].Send = chunkVal.Elem()
-				if chosen, _, _ := reflect.Select(cases); chosen == 1 {
-					return ctx.Err()
-				}
-			}
-
-			return nil
-		}
-
-		if err = dec.Decode(&v); err != nil {
-			return &plainError{&httpErr, err.Error()}
-		}
-
-		return nil
+		return c.handleNormalResponse(req.Context(), resp, v)
 	}
 
 	// Handle errors
@@ -280,7 +278,12 @@ func (c *RPCClient) Get(req *http.Request, v interface{}) (err error) {
 	if err != nil {
 		return err
 	}
-	httpErr.body = body
+
+	httpErr := httpError{
+		status:     resp.Status,
+		statusCode: resp.StatusCode,
+		body:       body,
+	}
 
 	if statusClass != 5 || !strings.Contains(resp.Header.Get("Content-Type"), "application/json") {
 		// Other errors with unknown body format (usually human readable string)
