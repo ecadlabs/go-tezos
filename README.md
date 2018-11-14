@@ -1,7 +1,8 @@
-
 # Work in progress
 
 go-tezos is a Go client library for Tezos RPC’s
+
+[![CircleCI](https://circleci.com/gh/ecadlabs/go-tezos/tree/master.svg?style=svg)](https://circleci.com/gh/ecadlabs/go-tezos/tree/master)
 
 This client RPC library is in development and should be considered alpha.
 Contributors are welcome. We will start to tag releases of this library in
