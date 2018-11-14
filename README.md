@@ -3,6 +3,7 @@
 go-tezos is a Go client library that is used to interact with a Tezos' nodes
 RPC methods.
 
+[![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/2349/badge)](https://bestpractices.coreinfrastructure.org/projects/2349)
 [![CircleCI](https://circleci.com/gh/ecadlabs/go-tezos/tree/master.svg?style=svg)](https://circleci.com/gh/ecadlabs/go-tezos/tree/master)
 
 
@@ -45,6 +46,13 @@ first, and then submit a pull request with your contribution.
 For a contribution to be merged, it must be well documented, come with unit
 tests, and integration tests where appropriate. Submitting a "Work in progress"
 pull request is welcome!
+
+## Reporting Security Issues
+
+If a security vulnerabiltiy in this project is discovered, please report the
+issue to go-tezos@ecadlabs.com or to `jevonearth` on keybase.io
+
+Reports may be encrypted using keys published on keybase.io
 
 # Tezos RPC API documentation
 
