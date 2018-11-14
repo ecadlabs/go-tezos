@@ -23,6 +23,7 @@ func TestServiceGetMethods(t *testing.T) {
 	tests := []struct {
 		get             func(s *Service) (interface{}, error)
 		respFixture     string
+		respInline      string
 		respStatus      int
 		respContentType string
 		expectedPath    string
@@ -31,7 +32,7 @@ func TestServiceGetMethods(t *testing.T) {
 		errType         interface{}
 	}{
 		{
-			get:             func(s *Service) (interface{}, error) { return s.GetStats(ctx) },
+			get:             func(s *Service) (interface{}, error) { return s.GetNetworkStats(ctx) },
 			respFixture:     "fixtures/network/stat.json",
 			respContentType: "application/json",
 			expectedPath:    "/network/stat",
@@ -43,11 +44,62 @@ func TestServiceGetMethods(t *testing.T) {
 			},
 		},
 		{
-			get:             func(s *Service) (interface{}, error) { return s.GetConnections(ctx) },
+			get:             func(s *Service) (interface{}, error) { return s.GetNetworkConnections(ctx) },
 			respFixture:     "fixtures/network/connections.json",
 			respContentType: "application/json",
 			expectedPath:    "/network/connections",
-			expectedValue:   []NetworkConnection{NetworkConnection{Incoming: false, PeerID: "idt5qvkLiJ15rb6yJU1bjpGmdyYnPJ", IDPoint: NetworkIDPoint{Addr: "::ffff:34.253.64.43", Port: 0x2604}, RemoteSocketPort: 0x2604, Versions: []NetworkVersion{NetworkVersion{Name: "TEZOS_ALPHANET_2018-07-31T16:22:39Z", Major: 0x0, Minor: 0x0}}, Private: false, LocalMetadata: NetworkMetadata{DisableMempool: false, PrivateNode: false}, RemoteMetadata: NetworkMetadata{DisableMempool: false, PrivateNode: false}}, NetworkConnection{Incoming: true, PeerID: "ids8VJTHEuyND6B8ahGgXPAJ3BDp1c", IDPoint: NetworkIDPoint{Addr: "::ffff:176.31.255.202", Port: 0x2604}, RemoteSocketPort: 0x2604, Versions: []NetworkVersion{NetworkVersion{Name: "TEZOS_ALPHANET_2018-07-31T16:22:39Z", Major: 0x0, Minor: 0x0}}, Private: true, LocalMetadata: NetworkMetadata{DisableMempool: true, PrivateNode: true}, RemoteMetadata: NetworkMetadata{DisableMempool: true, PrivateNode: true}}},
+			expectedValue:   []*NetworkConnection{&NetworkConnection{Incoming: false, PeerID: "idt5qvkLiJ15rb6yJU1bjpGmdyYnPJ", IDPoint: NetworkAddress{Addr: "::ffff:34.253.64.43", Port: 0x2604}, RemoteSocketPort: 0x2604, Versions: []NetworkVersion{NetworkVersion{Name: "TEZOS_ALPHANET_2018-07-31T16:22:39Z", Major: 0x0, Minor: 0x0}}, Private: false, LocalMetadata: NetworkMetadata{DisableMempool: false, PrivateNode: false}, RemoteMetadata: NetworkMetadata{DisableMempool: false, PrivateNode: false}}, &NetworkConnection{Incoming: true, PeerID: "ids8VJTHEuyND6B8ahGgXPAJ3BDp1c", IDPoint: NetworkAddress{Addr: "::ffff:176.31.255.202", Port: 0x2604}, RemoteSocketPort: 0x2604, Versions: []NetworkVersion{NetworkVersion{Name: "TEZOS_ALPHANET_2018-07-31T16:22:39Z", Major: 0x0, Minor: 0x0}}, Private: true, LocalMetadata: NetworkMetadata{DisableMempool: true, PrivateNode: true}, RemoteMetadata: NetworkMetadata{DisableMempool: true, PrivateNode: true}}},
+		},
+		{
+			get:             func(s *Service) (interface{}, error) { return s.GetNetworkPeers(ctx, "") },
+			respFixture:     "fixtures/network/peers.json",
+			respContentType: "application/json",
+			expectedPath:    "/network/peers",
+			expectedValue:   []*NetworkPeer{&NetworkPeer{PeerID: "idrnHcGMrFxiYsmxf5Cqd6NhUTUU8X", ConnMetadata: &NetworkMetadata{}, State: "running", ReachableAt: &NetworkAddress{Addr: "::ffff:45.79.146.133", Port: 39732}, Stat: NetworkStats{TotalBytesSent: 4908012, TotalBytesRecv: 14560268, CurrentInflow: 66, CurrentOutflow: 177}, LastEstablishedConnection: &NetworkConnectionTime{NetworkAddress: NetworkAddress{Addr: "::ffff:45.79.146.133", Port: 39732}, Time: timeMustUnmarshalText("2018-11-13T20:56:14Z")}, LastSeen: &NetworkConnectionTime{NetworkAddress: NetworkAddress{Addr: "::ffff:45.79.146.133", Port: 39732}, Time: timeMustUnmarshalText("2018-11-13T20:56:14Z")}, LastRejectedConnection: &NetworkConnectionTime{NetworkAddress: NetworkAddress{Addr: "::ffff:45.79.146.133", Port: 39732}, Time: timeMustUnmarshalText("2018-11-13T15:22:41Z")}, LastDisconnection: &NetworkConnectionTime{NetworkAddress: NetworkAddress{Addr: "::ffff:45.79.146.133", Port: 39732}, Time: timeMustUnmarshalText("2018-11-13T18:04:12Z")}, LastMiss: &NetworkConnectionTime{NetworkAddress: NetworkAddress{Addr: "::ffff:45.79.146.133", Port: 39732}, Time: timeMustUnmarshalText("2018-11-13T18:04:12Z")}}, &NetworkPeer{PeerID: "idsXeq1zboupwXXDdDDiWhBjimeJe3", State: "disconnected", LastEstablishedConnection: &NetworkConnectionTime{NetworkAddress: NetworkAddress{Addr: "::ffff:104.155.17.238", Port: 9732}, Time: timeMustUnmarshalText("2018-11-13T17:57:18Z")}, LastSeen: &NetworkConnectionTime{NetworkAddress: NetworkAddress{Addr: "::ffff:104.155.17.238", Port: 9732}, Time: timeMustUnmarshalText("2018-11-13T19:48:57Z")}, LastDisconnection: &NetworkConnectionTime{NetworkAddress: NetworkAddress{Addr: "::ffff:104.155.17.238", Port: 9732}, Time: timeMustUnmarshalText("2018-11-13T19:48:57Z")}, LastMiss: &NetworkConnectionTime{NetworkAddress: NetworkAddress{Addr: "::ffff:104.155.17.238", Port: 9732}, Time: timeMustUnmarshalText("2018-11-13T19:48:57Z")}}},
+		},
+		{
+			get:             func(s *Service) (interface{}, error) { return s.GetNetworkPeer(ctx, "idtTZmNapGXAcfbnPoAcDz6J2xCHZZ") },
+			respFixture:     "fixtures/network/peer.json",
+			respContentType: "application/json",
+			expectedPath:    "/network/peers/idtTZmNapGXAcfbnPoAcDz6J2xCHZZ",
+			expectedValue:   &NetworkPeer{PeerID: "idtTZmNapGXAcfbnPoAcDz6J2xCHZZ", ConnMetadata: &NetworkMetadata{}, State: "running", ReachableAt: &NetworkAddress{Addr: "::ffff:104.248.233.63", Port: 9732}, Stat: NetworkStats{TotalBytesSent: 1196571, TotalBytesRecv: 1302211, CurrentInflow: 0, CurrentOutflow: 1}, LastEstablishedConnection: &NetworkConnectionTime{NetworkAddress: NetworkAddress{Addr: "::ffff:104.248.233.63", Port: 9732}, Time: timeMustUnmarshalText("2018-11-14T11:47:07Z")}, LastSeen: &NetworkConnectionTime{NetworkAddress: NetworkAddress{Addr: "::ffff:104.248.233.63", Port: 9732}, Time: timeMustUnmarshalText("2018-11-14T11:47:07Z")}, LastDisconnection: &NetworkConnectionTime{NetworkAddress: NetworkAddress{Addr: "::ffff:104.248.233.63", Port: 9732}, Time: timeMustUnmarshalText("2018-11-14T11:44:57Z")}, LastMiss: &NetworkConnectionTime{NetworkAddress: NetworkAddress{Addr: "::ffff:104.248.233.63", Port: 9732}, Time: timeMustUnmarshalText("2018-11-14T11:44:57Z")}},
+		},
+		{
+			get: func(s *Service) (interface{}, error) {
+				return s.GetNetworkPeerBanned(ctx, "idtTZmNapGXAcfbnPoAcDz6J2xCHZZ")
+			},
+			respInline:      "false",
+			respContentType: "application/json",
+			expectedPath:    "/network/peers/idtTZmNapGXAcfbnPoAcDz6J2xCHZZ/banned",
+			expectedValue:   false,
+		},
+		{
+			get: func(s *Service) (interface{}, error) {
+				return s.GetNetworkPeerLog(ctx, "idrPSsREFE1MV1161ybEpaebFwgYWE")
+			},
+			respFixture:     "fixtures/network/peer_log.json",
+			respContentType: "application/json",
+			expectedPath:    "/network/peers/idrPSsREFE1MV1161ybEpaebFwgYWE/log",
+			expectedValue:   []*NetworkPeerLogEntry{&NetworkPeerLogEntry{NetworkAddress: NetworkAddress{Addr: "::ffff:13.81.43.51", Port: 9732}, Kind: "incoming_request", Timestamp: timeMustUnmarshalText("2018-11-13T15:35:17Z")}, &NetworkPeerLogEntry{NetworkAddress: NetworkAddress{Addr: "::ffff:13.81.43.51", Port: 9732}, Kind: "connection_established", Timestamp: timeMustUnmarshalText("2018-11-13T15:35:19Z")}, &NetworkPeerLogEntry{NetworkAddress: NetworkAddress{Addr: "::ffff:13.81.43.51", Port: 9732}, Kind: "external_disconnection", Timestamp: timeMustUnmarshalText("2018-11-13T18:02:51Z")}, &NetworkPeerLogEntry{NetworkAddress: NetworkAddress{Addr: "::ffff:13.81.43.51", Port: 9732}, Kind: "incoming_request", Timestamp: timeMustUnmarshalText("2018-11-13T20:56:14Z")}, &NetworkPeerLogEntry{NetworkAddress: NetworkAddress{Addr: "::ffff:13.81.43.51", Port: 9732}, Kind: "connection_established", Timestamp: timeMustUnmarshalText("2018-11-13T20:56:15Z")}},
+		},
+		{
+			get: func(s *Service) (interface{}, error) {
+				ch := make(chan []*NetworkPeerLogEntry, 100)
+				if err := s.MonitorNetworkPeerLog(ctx, "idsBATisQfJu7d6vCLY4CP66dKj7CQ", ch); err != nil {
+					return nil, err
+				}
+				close(ch)
+
+				var res [][]*NetworkPeerLogEntry
+				for b := range ch {
+					res = append(res, b)
+				}
+				return res, nil
+			},
+			respFixture:     "fixtures/network/peer_log.chunked",
+			respContentType: "application/json",
+			expectedPath:    "/network/peers/idsBATisQfJu7d6vCLY4CP66dKj7CQ/log",
+			expectedValue:   [][]*NetworkPeerLogEntry{[]*NetworkPeerLogEntry{&NetworkPeerLogEntry{NetworkAddress: NetworkAddress{Addr: "::ffff:51.15.242.114", Port: 9732}, Kind: "incoming_request", Timestamp: timeMustUnmarshalText("2018-11-13T15:20:14Z")}, &NetworkPeerLogEntry{NetworkAddress: NetworkAddress{Addr: "::ffff:51.15.242.114", Port: 9732}, Kind: "connection_established", Timestamp: timeMustUnmarshalText("2018-11-13T15:20:14Z")}, &NetworkPeerLogEntry{NetworkAddress: NetworkAddress{Addr: "::ffff:51.15.242.114", Port: 9732}, Kind: "external_disconnection", Timestamp: timeMustUnmarshalText("2018-11-13T16:30:08Z")}, &NetworkPeerLogEntry{NetworkAddress: NetworkAddress{Addr: "::ffff:51.15.242.114", Port: 9732}, Kind: "incoming_request", Timestamp: timeMustUnmarshalText("2018-11-13T16:39:20Z")}, &NetworkPeerLogEntry{NetworkAddress: NetworkAddress{Addr: "::ffff:51.15.242.114", Port: 9732}, Kind: "connection_established", Timestamp: timeMustUnmarshalText("2018-11-13T16:39:20Z")}, &NetworkPeerLogEntry{NetworkAddress: NetworkAddress{Addr: "::ffff:51.15.242.114", Port: 9732}, Kind: "external_disconnection", Timestamp: timeMustUnmarshalText("2018-11-13T19:48:58Z")}, &NetworkPeerLogEntry{NetworkAddress: NetworkAddress{Addr: "::ffff:51.15.242.114", Port: 9732}, Kind: "incoming_request", Timestamp: timeMustUnmarshalText("2018-11-13T20:56:30Z")}, &NetworkPeerLogEntry{NetworkAddress: NetworkAddress{Addr: "::ffff:51.15.242.114", Port: 9732}, Kind: "connection_established", Timestamp: timeMustUnmarshalText("2018-11-13T20:56:30Z")}}, []*NetworkPeerLogEntry{&NetworkPeerLogEntry{NetworkAddress: NetworkAddress{Addr: "::ffff:51.15.242.114", Port: 9732}, Kind: "external_disconnection", Timestamp: timeMustUnmarshalText("2018-11-13T22:25:07Z")}}},
 		},
 		{
 			get: func(s *Service) (interface{}, error) {
@@ -69,7 +121,7 @@ func TestServiceGetMethods(t *testing.T) {
 		},
 		{
 			get: func(s *Service) (interface{}, error) {
-				ch := make(chan *BootstrappedBlock, 1000)
+				ch := make(chan *BootstrappedBlock, 100)
 				if err := s.GetBootstrapped(ctx, ch); err != nil {
 					return nil, err
 				}
@@ -95,21 +147,21 @@ func TestServiceGetMethods(t *testing.T) {
 			get: func(s *Service) (interface{}, error) {
 				// Doesn't matter which Get* method we call here, as long as it calls RPCClient.Get
 				// in the implementation.
-				return s.GetStats(ctx)
+				return s.GetNetworkStats(ctx)
 			},
 			respStatus:      500,
 			respFixture:     "fixtures/error.json",
 			respContentType: "application/json",
 			expectedPath:    "/network/stat",
 			errMsg:          `tezos: RPC error (kind = "permanent", id = "proto.002-PsYLVpVv.context.storage_error")`,
-			errType:         (*rpcErrors)(nil),
+			errType:         (*rpcError)(nil),
 		},
 		// Handling 5xx errors from the Tezos node with empty RPC error information.
 		{
 			get: func(s *Service) (interface{}, error) {
 				// Doesn't matter which Get* method we call here, as long as it calls RPCClient.Get
 				// in the implementation.
-				return s.GetStats(ctx)
+				return s.GetNetworkStats(ctx)
 			},
 			respStatus:      500,
 			respFixture:     "fixtures/empty_error.json",
@@ -123,7 +175,7 @@ func TestServiceGetMethods(t *testing.T) {
 			get: func(s *Service) (interface{}, error) {
 				// Doesn't matter which Get* method we call here, as long as it calls RPCClient.Get
 				// in the implementation.
-				return s.GetStats(ctx)
+				return s.GetNetworkStats(ctx)
 			},
 			respStatus:      500,
 			respFixture:     "fixtures/malformed_error.json",
@@ -137,7 +189,7 @@ func TestServiceGetMethods(t *testing.T) {
 			get: func(s *Service) (interface{}, error) {
 				// Doesn't matter which Get* method we call here, as long as it calls RPCClient.Get
 				// in the implementation.
-				return s.GetStats(ctx)
+				return s.GetNetworkStats(ctx)
 			},
 			respStatus:   404,
 			respFixture:  "fixtures/empty.json",
@@ -153,8 +205,14 @@ func TestServiceGetMethods(t *testing.T) {
 			require.Equal(t, test.expectedPath, r.URL.Path)
 			require.Equal(t, http.MethodGet, r.Method)
 
-			buf, err := ioutil.ReadFile(test.respFixture)
-			require.NoError(t, err, "error reading fixture %q", test.respFixture)
+			var buf []byte
+			if test.respInline != "" {
+				buf = []byte(test.respInline)
+			} else {
+				var err error
+				buf, err = ioutil.ReadFile(test.respFixture)
+				require.NoError(t, err, "error reading fixture %q", test.respFixture)
+			}
 
 			if test.respContentType != "" {
 				w.Header().Set("Content-Type", test.respContentType)
@@ -163,7 +221,7 @@ func TestServiceGetMethods(t *testing.T) {
 			if test.respStatus != 0 {
 				w.WriteHeader(test.respStatus)
 			}
-			_, err = w.Write(buf)
+			_, err := w.Write(buf)
 			require.NoError(t, err, "error writing HTTP response")
 		}))
 

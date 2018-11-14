@@ -270,6 +270,9 @@ func (c *RPCClient) Get(req *http.Request, v interface{}) (err error) {
 
 	statusClass := resp.StatusCode / 100
 	if statusClass == 2 {
+		if v == nil {
+			return nil
+		}
 		return c.handleNormalResponse(req.Context(), resp, v)
 	}
 
@@ -336,6 +339,10 @@ func (c *RPCClient) Get(req *http.Request, v interface{}) (err error) {
 			kind:      errKind,
 			raw:       m,
 		}
+	}
+
+	if len(errs) == 1 {
+		return errs[0]
 	}
 
 	return &rpcErrors{
