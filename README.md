@@ -1,24 +1,52 @@
-# Work in progress
+# go-tezos
 
-go-tezos is a Go client library for Tezos RPC’s
+go-tezos is a Go client library that is used to interact with a Tezos' nodes
+RPC methods.
 
 [![CircleCI](https://circleci.com/gh/ecadlabs/go-tezos/tree/master.svg?style=svg)](https://circleci.com/gh/ecadlabs/go-tezos/tree/master)
+
+
+## Work in progress, contributions welcome.
 
 This client RPC library is in development and should be considered alpha.
 Contributors are welcome. We will start to tag releases of this library in
 November 2018.
 
 The library will be useful to anyone wanting to build tools, products or
-services on top of the Tezos RPC API.
+services on top of the Tezos RPC API in go.
 
 The library will be:
 
 * Well tested
 * Nightly Integration tests against official Tezos docker images
 * Written in Idiomatic Go
-* Aim to have complete coverage of the Tezos API and stay up to date with new RPCs or changes to existing RPCs
+* Aim to have complete coverage of the Tezos API and stay up to date with new
+  RPCs or changes to existing RPCs
 
-# Tezos RPC Api documentation
+# Documentation
+
+Library documentation lives in the code as godoc comments. Readers can view
+up-to-date documentation here: https://godoc.org/github.com/ecadlabs/go-tezos
+
+# Contributions
+
+## Reporting issues/feature requests
+
+Please use the [GitHub issue
+tracker](https://github.com/ecadlabs/go-tezos/issues) to report bugs or request
+features.
+
+## Contribution
+
+To contribute, please check the issue tracker to see if an existing issue
+exists for your planned contribution. If there's no Issue, please create one
+first, and then submit a pull request with your contribution. 
+
+For a contribution to be merged, it must be well documented, come with unit
+tests, and integration tests where appropriate. Submitting a "Work in progress"
+pull request is welcome!
+
+# Tezos RPC API documentation
 
 The best known RPC API docs are available here: http://tezos.gitlab.io/mainnet/
 
@@ -68,6 +96,3 @@ follows:
 Create a shell alias that you can run from your docker host for convenience;
 
 `alias tezos-client='sudo docker exec -it -e TEZOS_CLIENT_UNSAFE_DISABLE_DISCLAIMER=Y tezos_node tezos-client -A 0.0.0.0'`
-
-
-
