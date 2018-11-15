@@ -380,7 +380,7 @@ func (s *Service) BanNetworkPoint(ctx context.Context, address string) error {
 	return nil
 }
 
-// Trust a given address permanently. Connections from this address can still be closed on authentication if the peer is blacklisted or greylisted.
+// TrustNetworkPoint used to trust a given address permanently. Connections from this address can still be closed on authentication if the peer is blacklisted or greylisted.
 // https://tezos.gitlab.io/mainnet/api/rpc.html#get-network-points-point-trust
 func (s *Service) TrustNetworkPoint(ctx context.Context, address string) error {
 	req, err := s.Client.NewRequest(ctx, http.MethodGet, "/network/points/"+address+"/trust", nil)
