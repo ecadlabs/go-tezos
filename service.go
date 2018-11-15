@@ -2,6 +2,7 @@ package tezos
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"net/url"
 	"time"
@@ -57,32 +58,32 @@ type BootstrappedBlock struct {
 	Timestamp time.Time `json:"timestamp"`
 }
 
-// NetworkConnectionTime represents peer address with timestamp added
-type NetworkConnectionTime struct {
+// NetworkConnectionTimestamp represents peer address with timestamp added
+type NetworkConnectionTimestamp struct {
 	NetworkAddress
-	Time time.Time
+	Timestamp time.Time
 }
 
 // UnmarshalJSON implements json.Unmarshaler
-func (n *NetworkConnectionTime) UnmarshalJSON(data []byte) error {
-	return unmarshalHeterogeneousJSONArray(data, &n.NetworkAddress, &n.Time)
+func (n *NetworkConnectionTimestamp) UnmarshalJSON(data []byte) error {
+	return unmarshalHeterogeneousJSONArray(data, &n.NetworkAddress, &n.Timestamp)
 }
 
 // NetworkPeer represents peer info
 type NetworkPeer struct {
-	PeerID                    string                 `json:"-"`
-	Score                     int64                  `json:"score"`
-	Trusted                   bool                   `json:"trusted"`
-	ConnMetadata              *NetworkMetadata       `json:"conn_metadata"`
-	State                     string                 `json:"state"`
-	ReachableAt               *NetworkAddress        `json:"reachable_at"`
-	Stat                      NetworkStats           `json:"stat"`
-	LastEstablishedConnection *NetworkConnectionTime `json:"last_established_connection"`
-	LastSeen                  *NetworkConnectionTime `json:"last_seen"`
-	LastFailedConnection      *NetworkConnectionTime `json:"last_failed_connection"`
-	LastRejectedConnection    *NetworkConnectionTime `json:"last_rejected_connection"`
-	LastDisconnection         *NetworkConnectionTime `json:"last_disconnection"`
-	LastMiss                  *NetworkConnectionTime `json:"last_miss"`
+	PeerID                    string                      `json:"-"`
+	Score                     int64                       `json:"score"`
+	Trusted                   bool                        `json:"trusted"`
+	ConnMetadata              *NetworkMetadata            `json:"conn_metadata"`
+	State                     string                      `json:"state"`
+	ReachableAt               *NetworkAddress             `json:"reachable_at"`
+	Stat                      NetworkStats                `json:"stat"`
+	LastEstablishedConnection *NetworkConnectionTimestamp `json:"last_established_connection"`
+	LastSeen                  *NetworkConnectionTimestamp `json:"last_seen"`
+	LastFailedConnection      *NetworkConnectionTimestamp `json:"last_failed_connection"`
+	LastRejectedConnection    *NetworkConnectionTimestamp `json:"last_rejected_connection"`
+	LastDisconnection         *NetworkConnectionTimestamp `json:"last_disconnection"`
+	LastMiss                  *NetworkConnectionTimestamp `json:"last_miss"`
 }
 
 type networkPeerWithID NetworkPeer
@@ -98,6 +99,50 @@ type NetworkPeerLogEntry struct {
 	Timestamp time.Time `json:"timestamp"`
 }
 
+// NetworkPoint represents network point info
+type NetworkPoint struct {
+	Address                   string            `json:"-"`
+	Trusted                   bool              `json:"trusted"`
+	GreylistedUntil           time.Time         `json:"greylisted_until"`
+	State                     NetworkPointState `json:"state"`
+	P2PPeerID                 string            `json:"p2p_peer_id"`
+	LastFailedConnection      time.Time         `json:"last_failed_connection"`
+	LastRejectedConnection    *IDTimestamp      `json:"last_rejected_connection"`
+	LastEstablishedConnection *IDTimestamp      `json:"last_established_connection"`
+	LastDisconnection         *IDTimestamp      `json:"last_disconnection"`
+	LastSeen                  *IDTimestamp      `json:"last_seen"`
+	LastMiss                  time.Time         `json:"last_miss"`
+}
+
+type networkPointWithAddress NetworkPoint
+
+func (n *networkPointWithAddress) UnmarshalJSON(data []byte) error {
+	return unmarshalHeterogeneousJSONArray(data, &n.Address, (*NetworkPoint)(n))
+}
+
+// NetworkPointState represents point state
+type NetworkPointState struct {
+	EventKind string `json:"event_kind"`
+	P2PPeerID string `json:"p2p_peer_id"`
+}
+
+// IDTimestamp represents peer id with timestamp
+type IDTimestamp struct {
+	ID        string
+	Timestamp time.Time
+}
+
+// UnmarshalJSON implements json.Unmarshaler
+func (i *IDTimestamp) UnmarshalJSON(data []byte) error {
+	return unmarshalHeterogeneousJSONArray(data, &i.ID, &i.Timestamp)
+}
+
+// NetworkPointLogEntry represents point's log entry
+type NetworkPointLogEntry struct {
+	Kind      NetworkPointState `json:"kind"`
+	Timestamp time.Time         `json:"timestamp"`
+}
+
 // GetNetworkStats returns current network stats https://tezos.gitlab.io/betanet/api/rpc.html#get-network-stat
 func (s *Service) GetNetworkStats(ctx context.Context) (*NetworkStats, error) {
 	req, err := s.Client.NewRequest(ctx, http.MethodGet, "/network/stat", nil)
@@ -106,7 +151,7 @@ func (s *Service) GetNetworkStats(ctx context.Context) (*NetworkStats, error) {
 	}
 
 	var stats NetworkStats
-	if err := s.Client.Get(req, &stats); err != nil {
+	if err := s.Client.Do(req, &stats); err != nil {
 		return nil, err
 	}
 	return &stats, err
@@ -120,13 +165,14 @@ func (s *Service) GetNetworkConnections(ctx context.Context) ([]*NetworkConnecti
 	}
 
 	var conns []*NetworkConnection
-	if err := s.Client.Get(req, &conns); err != nil {
+	if err := s.Client.Do(req, &conns); err != nil {
 		return nil, err
 	}
 	return conns, err
 }
 
-// GetNetworkPeers returns all network peers https://tezos.gitlab.io/mainnet/api/rpc.html#get-network-peers
+// GetNetworkPeers returns the list the peers the node ever met.
+// https://tezos.gitlab.io/mainnet/api/rpc.html#get-network-peers
 func (s *Service) GetNetworkPeers(ctx context.Context, filter string) ([]*NetworkPeer, error) {
 	u := url.URL{
 		Path: "/network/peers",
@@ -145,7 +191,7 @@ func (s *Service) GetNetworkPeers(ctx context.Context, filter string) ([]*Networ
 	}
 
 	var peers []*networkPeerWithID
-	if err := s.Client.Get(req, &peers); err != nil {
+	if err := s.Client.Do(req, &peers); err != nil {
 		return nil, err
 	}
 
@@ -157,7 +203,8 @@ func (s *Service) GetNetworkPeers(ctx context.Context, filter string) ([]*Networ
 	return ret, err
 }
 
-// GetNetworkPeer returns peer info https://tezos.gitlab.io/mainnet/api/rpc.html#get-network-peers-peer-id
+// GetNetworkPeer returns details about a given peer.
+// https://tezos.gitlab.io/mainnet/api/rpc.html#get-network-peers-peer-id
 func (s *Service) GetNetworkPeer(ctx context.Context, peerID string) (*NetworkPeer, error) {
 	req, err := s.Client.NewRequest(ctx, http.MethodGet, "/network/peers/"+peerID, nil)
 	if err != nil {
@@ -165,7 +212,7 @@ func (s *Service) GetNetworkPeer(ctx context.Context, peerID string) (*NetworkPe
 	}
 
 	var peer NetworkPeer
-	if err := s.Client.Get(req, &peer); err != nil {
+	if err := s.Client.Do(req, &peer); err != nil {
 		return nil, err
 	}
 	peer.PeerID = peerID
@@ -173,33 +220,36 @@ func (s *Service) GetNetworkPeer(ctx context.Context, peerID string) (*NetworkPe
 	return &peer, err
 }
 
-// BanNetworkPeer bans the peer https://tezos.gitlab.io/mainnet/api/rpc.html#get-network-peers-peer-id-ban
+// BanNetworkPeer blacklists the given peer.
+// https://tezos.gitlab.io/mainnet/api/rpc.html#get-network-peers-peer-id-ban
 func (s *Service) BanNetworkPeer(ctx context.Context, peerID string) error {
 	req, err := s.Client.NewRequest(ctx, http.MethodGet, "/network/peers/"+peerID+"/ban", nil)
 	if err != nil {
 		return err
 	}
 
-	if err := s.Client.Get(req, nil); err != nil {
+	if err := s.Client.Do(req, nil); err != nil {
 		return err
 	}
 	return nil
 }
 
-// TrustNetworkPeer turns peer into trust mode https://tezos.gitlab.io/mainnet/api/rpc.html#get-network-peers-peer-id-trust
+// TrustNetworkPeer used to trust a given peer permanently: the peer cannot be blocked (but its host IP still can).
+// https://tezos.gitlab.io/mainnet/api/rpc.html#get-network-peers-peer-id-trust
 func (s *Service) TrustNetworkPeer(ctx context.Context, peerID string) error {
 	req, err := s.Client.NewRequest(ctx, http.MethodGet, "/network/peers/"+peerID+"/trust", nil)
 	if err != nil {
 		return err
 	}
 
-	if err := s.Client.Get(req, nil); err != nil {
+	if err := s.Client.Do(req, nil); err != nil {
 		return err
 	}
 	return nil
 }
 
-// GetNetworkPeerBanned returns true if the peer is banned https://tezos.gitlab.io/mainnet/api/rpc.html#get-network-peers-peer-id-banned
+// GetNetworkPeerBanned checks if a given peer is blacklisted or greylisted.
+// https://tezos.gitlab.io/mainnet/api/rpc.html#get-network-peers-peer-id-banned
 func (s *Service) GetNetworkPeerBanned(ctx context.Context, peerID string) (bool, error) {
 	req, err := s.Client.NewRequest(ctx, http.MethodGet, "/network/peers/"+peerID+"/banned", nil)
 	if err != nil {
@@ -207,14 +257,15 @@ func (s *Service) GetNetworkPeerBanned(ctx context.Context, peerID string) (bool
 	}
 
 	var banned bool
-	if err := s.Client.Get(req, &banned); err != nil {
+	if err := s.Client.Do(req, &banned); err != nil {
 		return false, err
 	}
 
 	return banned, err
 }
 
-// GetNetworkPeerLog returns peer's log https://tezos.gitlab.io/mainnet/api/rpc.html#get-network-peers-peer-id-log
+// GetNetworkPeerLog monitors network events related to a given peer.
+// https://tezos.gitlab.io/mainnet/api/rpc.html#get-network-peers-peer-id-log
 func (s *Service) GetNetworkPeerLog(ctx context.Context, peerID string) ([]*NetworkPeerLogEntry, error) {
 	req, err := s.Client.NewRequest(ctx, http.MethodGet, "/network/peers/"+peerID+"/log", nil)
 	if err != nil {
@@ -222,21 +273,168 @@ func (s *Service) GetNetworkPeerLog(ctx context.Context, peerID string) ([]*Netw
 	}
 
 	var log []*NetworkPeerLogEntry
-	if err := s.Client.Get(req, &log); err != nil {
+	if err := s.Client.Do(req, &log); err != nil {
 		return nil, err
 	}
 
 	return log, err
 }
 
-// MonitorNetworkPeerLog returns peer's log as a stream https://tezos.gitlab.io/mainnet/api/rpc.html#get-network-peers-peer-id-log
+// MonitorNetworkPeerLog monitor network events related to a given peer.
+// https://tezos.gitlab.io/mainnet/api/rpc.html#get-network-peers-peer-id-log
 func (s *Service) MonitorNetworkPeerLog(ctx context.Context, peerID string, results chan<- []*NetworkPeerLogEntry) error {
 	req, err := s.Client.NewRequest(ctx, http.MethodGet, "/network/peers/"+peerID+"/log?monitor", nil)
 	if err != nil {
 		return err
 	}
 
-	return s.Client.Get(req, results)
+	return s.Client.Do(req, results)
+}
+
+// GetNetworkPoints returns list the pool of known `IP:port` used for establishing P2P connections.
+// https://tezos.gitlab.io/mainnet/api/rpc.html#get-network-points
+func (s *Service) GetNetworkPoints(ctx context.Context, filter string) ([]*NetworkPoint, error) {
+	u := url.URL{
+		Path: "/network/points",
+	}
+
+	if filter != "" {
+		q := url.Values{
+			"filter": []string{filter},
+		}
+		u.RawQuery = q.Encode()
+	}
+
+	req, err := s.Client.NewRequest(ctx, http.MethodGet, u.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	var points []*networkPointWithAddress
+	if err := s.Client.Do(req, &points); err != nil {
+		return nil, err
+	}
+
+	ret := make([]*NetworkPoint, len(points))
+	for i, p := range points {
+		ret[i] = (*NetworkPoint)(p)
+	}
+
+	return ret, err
+}
+
+// GetNetworkPoint returns details about a given `IP:addr`.
+// https://tezos.gitlab.io/mainnet/api/rpc.html#get-network-points-point
+func (s *Service) GetNetworkPoint(ctx context.Context, address string) (*NetworkPoint, error) {
+	req, err := s.Client.NewRequest(ctx, http.MethodGet, "/network/points/"+address, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	var point NetworkPoint
+	if err := s.Client.Do(req, &point); err != nil {
+		return nil, err
+	}
+	point.Address = address
+
+	return &point, err
+}
+
+// ConnectToNetworkPoint used to connect to a peer.
+// https://tezos.gitlab.io/mainnet/api/rpc.html#put-network-points-point
+func (s *Service) ConnectToNetworkPoint(ctx context.Context, address string, timeout time.Duration) error {
+	u := url.URL{
+		Path: "/network/points/" + address,
+	}
+
+	if timeout > 0 {
+		q := url.Values{
+			"timeout": []string{fmt.Sprintf("%f", float64(timeout)/float64(time.Second))},
+		}
+		u.RawQuery = q.Encode()
+	}
+
+	req, err := s.Client.NewRequest(ctx, http.MethodPut, u.String(), &struct{}{})
+	if err != nil {
+		return err
+	}
+
+	if err := s.Client.Do(req, nil); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// BanNetworkPoint blacklists the given address.
+// https://tezos.gitlab.io/mainnet/api/rpc.html#get-network-points-point-ban
+func (s *Service) BanNetworkPoint(ctx context.Context, address string) error {
+	req, err := s.Client.NewRequest(ctx, http.MethodGet, "/network/points/"+address+"/ban", nil)
+	if err != nil {
+		return err
+	}
+
+	if err := s.Client.Do(req, nil); err != nil {
+		return err
+	}
+	return nil
+}
+
+// Trust a given address permanently. Connections from this address can still be closed on authentication if the peer is blacklisted or greylisted.
+// https://tezos.gitlab.io/mainnet/api/rpc.html#get-network-points-point-trust
+func (s *Service) TrustNetworkPoint(ctx context.Context, address string) error {
+	req, err := s.Client.NewRequest(ctx, http.MethodGet, "/network/points/"+address+"/trust", nil)
+	if err != nil {
+		return err
+	}
+
+	if err := s.Client.Do(req, nil); err != nil {
+		return err
+	}
+	return nil
+}
+
+// GetNetworkPointBanned check is a given address is blacklisted or greylisted.
+// https://tezos.gitlab.io/mainnet/api/rpc.html#get-network-points-point-banned
+func (s *Service) GetNetworkPointBanned(ctx context.Context, address string) (bool, error) {
+	req, err := s.Client.NewRequest(ctx, http.MethodGet, "/network/points/"+address+"/banned", nil)
+	if err != nil {
+		return false, err
+	}
+
+	var banned bool
+	if err := s.Client.Do(req, &banned); err != nil {
+		return false, err
+	}
+
+	return banned, err
+}
+
+// GetNetworkPointLog monitors network events related to an `IP:addr`.
+// https://tezos.gitlab.io/mainnet/api/rpc.html#get-network-peers-peer-id-log
+func (s *Service) GetNetworkPointLog(ctx context.Context, address string) ([]*NetworkPointLogEntry, error) {
+	req, err := s.Client.NewRequest(ctx, http.MethodGet, "/network/points/"+address+"/log", nil)
+	if err != nil {
+		return nil, err
+	}
+
+	var log []*NetworkPointLogEntry
+	if err := s.Client.Do(req, &log); err != nil {
+		return nil, err
+	}
+
+	return log, err
+}
+
+// MonitorNetworkPointLog monitors network events related to an `IP:addr`.
+// https://tezos.gitlab.io/mainnet/api/rpc.html#get-network-peers-peer-id-log
+func (s *Service) MonitorNetworkPointLog(ctx context.Context, address string, results chan<- []*NetworkPointLogEntry) error {
+	req, err := s.Client.NewRequest(ctx, http.MethodGet, "/network/points/"+address+"/log?monitor", nil)
+	if err != nil {
+		return err
+	}
+
+	return s.Client.Do(req, results)
 }
 
 // GetDelegateBalance returns a delegate's balance http://tezos.gitlab.io/mainnet/api/rpc.html#get-block-id-context-delegates-pkh-balance
@@ -248,7 +446,7 @@ func (s *Service) GetDelegateBalance(ctx context.Context, chainID string, blockI
 	}
 
 	var balance string
-	if err := s.Client.Get(req, &balance); err != nil {
+	if err := s.Client.Do(req, &balance); err != nil {
 		return "", err
 	}
 
@@ -264,7 +462,7 @@ func (s *Service) GetContractBalance(ctx context.Context, chainID string, blockI
 	}
 
 	var balance string
-	if err := s.Client.Get(req, &balance); err != nil {
+	if err := s.Client.Do(req, &balance); err != nil {
 		return "", err
 	}
 
@@ -278,5 +476,5 @@ func (s *Service) GetBootstrapped(ctx context.Context, results chan<- *Bootstrap
 		return err
 	}
 
-	return s.Client.Get(req, results)
+	return s.Client.Do(req, results)
 }

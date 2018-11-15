@@ -27,7 +27,9 @@ func TestServiceGetMethods(t *testing.T) {
 		respStatus      int
 		respContentType string
 		expectedPath    string
+		expectedQuery   string
 		expectedValue   interface{}
+		expectedMethod  string
 		errMsg          string
 		errType         interface{}
 	}{
@@ -55,14 +57,14 @@ func TestServiceGetMethods(t *testing.T) {
 			respFixture:     "fixtures/network/peers.json",
 			respContentType: "application/json",
 			expectedPath:    "/network/peers",
-			expectedValue:   []*NetworkPeer{&NetworkPeer{PeerID: "idrnHcGMrFxiYsmxf5Cqd6NhUTUU8X", ConnMetadata: &NetworkMetadata{}, State: "running", ReachableAt: &NetworkAddress{Addr: "::ffff:45.79.146.133", Port: 39732}, Stat: NetworkStats{TotalBytesSent: 4908012, TotalBytesRecv: 14560268, CurrentInflow: 66, CurrentOutflow: 177}, LastEstablishedConnection: &NetworkConnectionTime{NetworkAddress: NetworkAddress{Addr: "::ffff:45.79.146.133", Port: 39732}, Time: timeMustUnmarshalText("2018-11-13T20:56:14Z")}, LastSeen: &NetworkConnectionTime{NetworkAddress: NetworkAddress{Addr: "::ffff:45.79.146.133", Port: 39732}, Time: timeMustUnmarshalText("2018-11-13T20:56:14Z")}, LastRejectedConnection: &NetworkConnectionTime{NetworkAddress: NetworkAddress{Addr: "::ffff:45.79.146.133", Port: 39732}, Time: timeMustUnmarshalText("2018-11-13T15:22:41Z")}, LastDisconnection: &NetworkConnectionTime{NetworkAddress: NetworkAddress{Addr: "::ffff:45.79.146.133", Port: 39732}, Time: timeMustUnmarshalText("2018-11-13T18:04:12Z")}, LastMiss: &NetworkConnectionTime{NetworkAddress: NetworkAddress{Addr: "::ffff:45.79.146.133", Port: 39732}, Time: timeMustUnmarshalText("2018-11-13T18:04:12Z")}}, &NetworkPeer{PeerID: "idsXeq1zboupwXXDdDDiWhBjimeJe3", State: "disconnected", LastEstablishedConnection: &NetworkConnectionTime{NetworkAddress: NetworkAddress{Addr: "::ffff:104.155.17.238", Port: 9732}, Time: timeMustUnmarshalText("2018-11-13T17:57:18Z")}, LastSeen: &NetworkConnectionTime{NetworkAddress: NetworkAddress{Addr: "::ffff:104.155.17.238", Port: 9732}, Time: timeMustUnmarshalText("2018-11-13T19:48:57Z")}, LastDisconnection: &NetworkConnectionTime{NetworkAddress: NetworkAddress{Addr: "::ffff:104.155.17.238", Port: 9732}, Time: timeMustUnmarshalText("2018-11-13T19:48:57Z")}, LastMiss: &NetworkConnectionTime{NetworkAddress: NetworkAddress{Addr: "::ffff:104.155.17.238", Port: 9732}, Time: timeMustUnmarshalText("2018-11-13T19:48:57Z")}}},
+			expectedValue:   []*NetworkPeer{&NetworkPeer{PeerID: "idrnHcGMrFxiYsmxf5Cqd6NhUTUU8X", ConnMetadata: &NetworkMetadata{}, State: "running", ReachableAt: &NetworkAddress{Addr: "::ffff:45.79.146.133", Port: 39732}, Stat: NetworkStats{TotalBytesSent: 4908012, TotalBytesRecv: 14560268, CurrentInflow: 66, CurrentOutflow: 177}, LastEstablishedConnection: &NetworkConnectionTimestamp{NetworkAddress: NetworkAddress{Addr: "::ffff:45.79.146.133", Port: 39732}, Timestamp: timeMustUnmarshalText("2018-11-13T20:56:14Z")}, LastSeen: &NetworkConnectionTimestamp{NetworkAddress: NetworkAddress{Addr: "::ffff:45.79.146.133", Port: 39732}, Timestamp: timeMustUnmarshalText("2018-11-13T20:56:14Z")}, LastRejectedConnection: &NetworkConnectionTimestamp{NetworkAddress: NetworkAddress{Addr: "::ffff:45.79.146.133", Port: 39732}, Timestamp: timeMustUnmarshalText("2018-11-13T15:22:41Z")}, LastDisconnection: &NetworkConnectionTimestamp{NetworkAddress: NetworkAddress{Addr: "::ffff:45.79.146.133", Port: 39732}, Timestamp: timeMustUnmarshalText("2018-11-13T18:04:12Z")}, LastMiss: &NetworkConnectionTimestamp{NetworkAddress: NetworkAddress{Addr: "::ffff:45.79.146.133", Port: 39732}, Timestamp: timeMustUnmarshalText("2018-11-13T18:04:12Z")}}, &NetworkPeer{PeerID: "idsXeq1zboupwXXDdDDiWhBjimeJe3", State: "disconnected", LastEstablishedConnection: &NetworkConnectionTimestamp{NetworkAddress: NetworkAddress{Addr: "::ffff:104.155.17.238", Port: 9732}, Timestamp: timeMustUnmarshalText("2018-11-13T17:57:18Z")}, LastSeen: &NetworkConnectionTimestamp{NetworkAddress: NetworkAddress{Addr: "::ffff:104.155.17.238", Port: 9732}, Timestamp: timeMustUnmarshalText("2018-11-13T19:48:57Z")}, LastDisconnection: &NetworkConnectionTimestamp{NetworkAddress: NetworkAddress{Addr: "::ffff:104.155.17.238", Port: 9732}, Timestamp: timeMustUnmarshalText("2018-11-13T19:48:57Z")}, LastMiss: &NetworkConnectionTimestamp{NetworkAddress: NetworkAddress{Addr: "::ffff:104.155.17.238", Port: 9732}, Timestamp: timeMustUnmarshalText("2018-11-13T19:48:57Z")}}},
 		},
 		{
 			get:             func(s *Service) (interface{}, error) { return s.GetNetworkPeer(ctx, "idtTZmNapGXAcfbnPoAcDz6J2xCHZZ") },
 			respFixture:     "fixtures/network/peer.json",
 			respContentType: "application/json",
 			expectedPath:    "/network/peers/idtTZmNapGXAcfbnPoAcDz6J2xCHZZ",
-			expectedValue:   &NetworkPeer{PeerID: "idtTZmNapGXAcfbnPoAcDz6J2xCHZZ", ConnMetadata: &NetworkMetadata{}, State: "running", ReachableAt: &NetworkAddress{Addr: "::ffff:104.248.233.63", Port: 9732}, Stat: NetworkStats{TotalBytesSent: 1196571, TotalBytesRecv: 1302211, CurrentInflow: 0, CurrentOutflow: 1}, LastEstablishedConnection: &NetworkConnectionTime{NetworkAddress: NetworkAddress{Addr: "::ffff:104.248.233.63", Port: 9732}, Time: timeMustUnmarshalText("2018-11-14T11:47:07Z")}, LastSeen: &NetworkConnectionTime{NetworkAddress: NetworkAddress{Addr: "::ffff:104.248.233.63", Port: 9732}, Time: timeMustUnmarshalText("2018-11-14T11:47:07Z")}, LastDisconnection: &NetworkConnectionTime{NetworkAddress: NetworkAddress{Addr: "::ffff:104.248.233.63", Port: 9732}, Time: timeMustUnmarshalText("2018-11-14T11:44:57Z")}, LastMiss: &NetworkConnectionTime{NetworkAddress: NetworkAddress{Addr: "::ffff:104.248.233.63", Port: 9732}, Time: timeMustUnmarshalText("2018-11-14T11:44:57Z")}},
+			expectedValue:   &NetworkPeer{PeerID: "idtTZmNapGXAcfbnPoAcDz6J2xCHZZ", ConnMetadata: &NetworkMetadata{}, State: "running", ReachableAt: &NetworkAddress{Addr: "::ffff:104.248.233.63", Port: 9732}, Stat: NetworkStats{TotalBytesSent: 1196571, TotalBytesRecv: 1302211, CurrentInflow: 0, CurrentOutflow: 1}, LastEstablishedConnection: &NetworkConnectionTimestamp{NetworkAddress: NetworkAddress{Addr: "::ffff:104.248.233.63", Port: 9732}, Timestamp: timeMustUnmarshalText("2018-11-14T11:47:07Z")}, LastSeen: &NetworkConnectionTimestamp{NetworkAddress: NetworkAddress{Addr: "::ffff:104.248.233.63", Port: 9732}, Timestamp: timeMustUnmarshalText("2018-11-14T11:47:07Z")}, LastDisconnection: &NetworkConnectionTimestamp{NetworkAddress: NetworkAddress{Addr: "::ffff:104.248.233.63", Port: 9732}, Timestamp: timeMustUnmarshalText("2018-11-14T11:44:57Z")}, LastMiss: &NetworkConnectionTimestamp{NetworkAddress: NetworkAddress{Addr: "::ffff:104.248.233.63", Port: 9732}, Timestamp: timeMustUnmarshalText("2018-11-14T11:44:57Z")}},
 		},
 		{
 			get: func(s *Service) (interface{}, error) {
@@ -100,6 +102,68 @@ func TestServiceGetMethods(t *testing.T) {
 			respContentType: "application/json",
 			expectedPath:    "/network/peers/idsBATisQfJu7d6vCLY4CP66dKj7CQ/log",
 			expectedValue:   [][]*NetworkPeerLogEntry{[]*NetworkPeerLogEntry{&NetworkPeerLogEntry{NetworkAddress: NetworkAddress{Addr: "::ffff:51.15.242.114", Port: 9732}, Kind: "incoming_request", Timestamp: timeMustUnmarshalText("2018-11-13T15:20:14Z")}, &NetworkPeerLogEntry{NetworkAddress: NetworkAddress{Addr: "::ffff:51.15.242.114", Port: 9732}, Kind: "connection_established", Timestamp: timeMustUnmarshalText("2018-11-13T15:20:14Z")}, &NetworkPeerLogEntry{NetworkAddress: NetworkAddress{Addr: "::ffff:51.15.242.114", Port: 9732}, Kind: "external_disconnection", Timestamp: timeMustUnmarshalText("2018-11-13T16:30:08Z")}, &NetworkPeerLogEntry{NetworkAddress: NetworkAddress{Addr: "::ffff:51.15.242.114", Port: 9732}, Kind: "incoming_request", Timestamp: timeMustUnmarshalText("2018-11-13T16:39:20Z")}, &NetworkPeerLogEntry{NetworkAddress: NetworkAddress{Addr: "::ffff:51.15.242.114", Port: 9732}, Kind: "connection_established", Timestamp: timeMustUnmarshalText("2018-11-13T16:39:20Z")}, &NetworkPeerLogEntry{NetworkAddress: NetworkAddress{Addr: "::ffff:51.15.242.114", Port: 9732}, Kind: "external_disconnection", Timestamp: timeMustUnmarshalText("2018-11-13T19:48:58Z")}, &NetworkPeerLogEntry{NetworkAddress: NetworkAddress{Addr: "::ffff:51.15.242.114", Port: 9732}, Kind: "incoming_request", Timestamp: timeMustUnmarshalText("2018-11-13T20:56:30Z")}, &NetworkPeerLogEntry{NetworkAddress: NetworkAddress{Addr: "::ffff:51.15.242.114", Port: 9732}, Kind: "connection_established", Timestamp: timeMustUnmarshalText("2018-11-13T20:56:30Z")}}, []*NetworkPeerLogEntry{&NetworkPeerLogEntry{NetworkAddress: NetworkAddress{Addr: "::ffff:51.15.242.114", Port: 9732}, Kind: "external_disconnection", Timestamp: timeMustUnmarshalText("2018-11-13T22:25:07Z")}}},
+		},
+		{
+			get:             func(s *Service) (interface{}, error) { return s.GetNetworkPoints(ctx, "") },
+			respFixture:     "fixtures/network/points.json",
+			respContentType: "application/json",
+			expectedPath:    "/network/points",
+			expectedValue:   []*NetworkPoint{&NetworkPoint{Address: "73.247.92.150:9732", Trusted: false, GreylistedUntil: timeMustUnmarshalText("2018-11-14T19:01:28Z"), State: NetworkPointState{EventKind: "disconnected"}, LastFailedConnection: timeMustUnmarshalText("2018-11-14T19:01:16Z"), LastMiss: timeMustUnmarshalText("2018-11-14T19:01:16Z")}, &NetworkPoint{Address: "40.119.159.28:9732", Trusted: false, GreylistedUntil: timeMustUnmarshalText("2018-11-14T16:24:57Z"), State: NetworkPointState{EventKind: "running", P2PPeerID: "ids496Ey2BKHVJYZdsk72XCwbZteTj"}, P2PPeerID: "ids496Ey2BKHVJYZdsk72XCwbZteTj", LastFailedConnection: timeMustUnmarshalText("2018-11-14T11:47:13Z"), LastRejectedConnection: &IDTimestamp{ID: "ids496Ey2BKHVJYZdsk72XCwbZteTj", Timestamp: timeMustUnmarshalText("2018-11-14T12:03:11Z")}, LastEstablishedConnection: &IDTimestamp{ID: "ids496Ey2BKHVJYZdsk72XCwbZteTj", Timestamp: timeMustUnmarshalText("2018-11-14T16:48:56Z")}, LastDisconnection: &IDTimestamp{ID: "ids496Ey2BKHVJYZdsk72XCwbZteTj", Timestamp: timeMustUnmarshalText("2018-11-14T16:23:57Z")}, LastSeen: &IDTimestamp{ID: "ids496Ey2BKHVJYZdsk72XCwbZteTj", Timestamp: timeMustUnmarshalText("2018-11-14T16:48:56Z")}, LastMiss: timeMustUnmarshalText("2018-11-14T16:23:57Z")}},
+		},
+		{
+			get:             func(s *Service) (interface{}, error) { return s.GetNetworkPoint(ctx, "40.119.159.28:9732") },
+			respFixture:     "fixtures/network/point.json",
+			respContentType: "application/json",
+			expectedPath:    "/network/points/40.119.159.28:9732",
+			expectedValue:   &NetworkPoint{Address: "40.119.159.28:9732", Trusted: false, GreylistedUntil: timeMustUnmarshalText("2018-11-14T16:24:57Z"), State: NetworkPointState{EventKind: "running", P2PPeerID: "ids496Ey2BKHVJYZdsk72XCwbZteTj"}, P2PPeerID: "ids496Ey2BKHVJYZdsk72XCwbZteTj", LastFailedConnection: timeMustUnmarshalText("2018-11-14T11:47:13Z"), LastRejectedConnection: &IDTimestamp{ID: "ids496Ey2BKHVJYZdsk72XCwbZteTj", Timestamp: timeMustUnmarshalText("2018-11-14T12:03:11Z")}, LastEstablishedConnection: &IDTimestamp{ID: "ids496Ey2BKHVJYZdsk72XCwbZteTj", Timestamp: timeMustUnmarshalText("2018-11-14T16:48:56Z")}, LastDisconnection: &IDTimestamp{ID: "ids496Ey2BKHVJYZdsk72XCwbZteTj", Timestamp: timeMustUnmarshalText("2018-11-14T16:23:57Z")}, LastSeen: &IDTimestamp{ID: "ids496Ey2BKHVJYZdsk72XCwbZteTj", Timestamp: timeMustUnmarshalText("2018-11-14T16:48:56Z")}, LastMiss: timeMustUnmarshalText("2018-11-14T16:23:57Z")},
+		},
+		{
+			get: func(s *Service) (interface{}, error) {
+				return s.GetNetworkPointBanned(ctx, "40.119.159.28:9732")
+			},
+			respInline:      "false",
+			respContentType: "application/json",
+			expectedPath:    "/network/points/40.119.159.28:9732/banned",
+			expectedValue:   false,
+		},
+		{
+			get: func(s *Service) (interface{}, error) {
+				return s.GetNetworkPointLog(ctx, "34.255.45.196:9732")
+			},
+			respFixture:     "fixtures/network/point_log.json",
+			respContentType: "application/json",
+			expectedPath:    "/network/points/34.255.45.196:9732/log",
+			expectedValue:   []*NetworkPointLogEntry{&NetworkPointLogEntry{Kind: NetworkPointState{EventKind: "outgoing_request"}, Timestamp: timeMustUnmarshalText("2018-11-15T17:56:18Z")}, &NetworkPointLogEntry{Kind: NetworkPointState{EventKind: "accepting_request", P2PPeerID: "idrBJarh4t32gN9s52kxMWmeSi76Jk"}, Timestamp: timeMustUnmarshalText("2018-11-15T17:56:19Z")}, &NetworkPointLogEntry{Kind: NetworkPointState{EventKind: "rejecting_request", P2PPeerID: "idrBJarh4t32gN9s52kxMWmeSi76Jk"}, Timestamp: timeMustUnmarshalText("2018-11-15T17:56:19Z")}},
+		},
+		{
+			get: func(s *Service) (interface{}, error) {
+				ch := make(chan []*NetworkPointLogEntry, 100)
+				if err := s.MonitorNetworkPointLog(ctx, "80.214.69.170:9732", ch); err != nil {
+					return nil, err
+				}
+				close(ch)
+
+				var res [][]*NetworkPointLogEntry
+				for b := range ch {
+					res = append(res, b)
+				}
+
+				return res, nil
+			},
+			respFixture:     "fixtures/network/point_log.chunked",
+			respContentType: "application/json",
+			expectedPath:    "/network/points/80.214.69.170:9732/log",
+			expectedValue:   [][]*NetworkPointLogEntry{[]*NetworkPointLogEntry{&NetworkPointLogEntry{Kind: NetworkPointState{EventKind: "outgoing_request"}, Timestamp: timeMustUnmarshalText("2018-11-15T18:00:39Z")}, &NetworkPointLogEntry{Kind: NetworkPointState{EventKind: "request_rejected"}, Timestamp: timeMustUnmarshalText("2018-11-15T18:00:49Z")}}, []*NetworkPointLogEntry{&NetworkPointLogEntry{Kind: NetworkPointState{EventKind: "outgoing_request"}, Timestamp: timeMustUnmarshalText("2018-11-15T18:16:18Z")}}, []*NetworkPointLogEntry{&NetworkPointLogEntry{Kind: NetworkPointState{EventKind: "request_rejected"}, Timestamp: timeMustUnmarshalText("2018-11-15T18:16:28Z")}}},
+		},
+		{
+			get: func(s *Service) (interface{}, error) {
+				return nil, s.ConnectToNetworkPoint(ctx, "80.214.69.170:9732", 10*time.Second)
+			},
+			respInline:      "{}",
+			respContentType: "application/json",
+			expectedPath:    "/network/points/80.214.69.170:9732",
+			expectedMethod:  "PUT",
+			expectedQuery:   "timeout=10.000000",
 		},
 		{
 			get: func(s *Service) (interface{}, error) {
@@ -203,7 +267,16 @@ func TestServiceGetMethods(t *testing.T) {
 		// Start a test HTTP server that responds as specified in the test case parameters.
 		srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			require.Equal(t, test.expectedPath, r.URL.Path)
-			require.Equal(t, http.MethodGet, r.Method)
+
+			if test.expectedQuery != "" {
+				require.Equal(t, test.expectedQuery, r.URL.RawQuery)
+			}
+
+			m := test.expectedMethod
+			if m == "" {
+				m = http.MethodGet
+			}
+			require.Equal(t, m, r.Method)
 
 			var buf []byte
 			if test.respInline != "" {

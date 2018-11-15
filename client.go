@@ -251,8 +251,8 @@ func (c *RPCClient) handleNormalResponse(ctx context.Context, resp *http.Respons
 	return nil
 }
 
-// Get retrieves values from the API and marshals them into the provided interface.
-func (c *RPCClient) Get(req *http.Request, v interface{}) (err error) {
+// Do retrieves values from the API and marshals them into the provided interface.
+func (c *RPCClient) Do(req *http.Request, v interface{}) (err error) {
 	resp, err := c.client.Do(req)
 	if err != nil {
 		return err
