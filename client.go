@@ -5,8 +5,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
+	"io/ioutil"
 	"net/http"
 	"net/url"
+	"reflect"
+	"strings"
 )
 
 const (
@@ -15,57 +19,135 @@ const (
 	mediaType      = "application/json"
 )
 
-// RPCErrorKind models the kind of Tezos RPC errors that exist.
-type RPCErrorKind int
-
 const (
-	// Permanent Tezos RPC error kind.
-	Permanent RPCErrorKind = iota
-	// Temporary Tezos RPC error kind.
-	Temporary
-	// Branch Tezos RPC error kind.
-	Branch
-	// Unknown Tezos RPC error kind.
-	Unknown
+	// ErrorKindPermanent Tezos RPC error kind.
+	ErrorKindPermanent = "permanent"
+	// ErrorKindTemporary Tezos RPC error kind.
+	ErrorKindTemporary = "temporary"
+	// ErrorKindBranch Tezos RPC error kind.
+	ErrorKindBranch = "branch"
 )
 
-// UnmarshalJSON implements json.Unmarshaler.
-func (k *RPCErrorKind) UnmarshalJSON(data []byte) error {
-	switch string(data) {
-	case `"permanent"`:
-		*k = Permanent
-	case `"temporary"`:
-		*k = Temporary
-	case `"branch"`:
-		*k = Branch
-	default:
-		*k = Unknown
-	}
-	return nil
-}
-
-func (k RPCErrorKind) String() string {
-	switch k {
-	case Permanent:
-		return "permanent"
-	case Temporary:
-		return "temporary"
-	case Branch:
-		return "branch"
-	default:
-		return "unknown"
-	}
+// HTTPError retains HTTP status
+type HTTPError interface {
+	error
+	Status() string  // e.g. "200 OK"
+	StatusCode() int // e.g. 200
+	Body() []byte
 }
 
 // RPCError is a Tezos RPC error as documented on http://tezos.gitlab.io/mainnet/api/errors.html.
-type RPCError struct {
-	Kind RPCErrorKind `json:"kind"`
-	ID   string       `json:"id"`
+type RPCError interface {
+	HTTPError
+	ID() string
+	Kind() string // e.g. "permanent"
+	Raw() map[string]interface{}
+	Errors() []RPCError // returns all errors as a slice
 }
 
-func (k RPCError) Error() string {
-	return fmt.Sprintf("Tezos RPC error (kind = %q, id = %q)", k.Kind, k.ID)
+type httpError struct {
+	status     string
+	statusCode int
+	body       []byte
 }
+
+func (e *httpError) Error() string {
+	return fmt.Sprintf("tezos: HTTP status %v", e.statusCode)
+}
+
+func (e *httpError) Status() string {
+	return e.status
+}
+
+func (e *httpError) StatusCode() int {
+	return e.statusCode
+}
+
+func (e *httpError) Body() []byte {
+	return e.body
+}
+
+type rpcError struct {
+	*httpError
+	id   string
+	kind string // e.g. "permanent"
+	raw  map[string]interface{}
+}
+
+func (e *rpcError) Error() string {
+	return fmt.Sprintf("tezos: RPC error (kind = %q, id = %q)", e.kind, e.id)
+}
+
+func (e *rpcError) ID() string {
+	return e.id
+}
+
+func (e *rpcError) Kind() string {
+	return e.kind
+}
+
+func (e *rpcError) Raw() map[string]interface{} {
+	return e.raw
+}
+
+func (e *rpcError) Errors() []RPCError {
+	return []RPCError{e}
+}
+
+type rpcErrors struct {
+	*httpError
+	errors []*rpcError
+}
+
+func (e *rpcErrors) Error() string {
+	if len(e.errors) == 0 {
+		return ""
+	}
+	return e.errors[0].Error()
+}
+
+func (e *rpcErrors) ID() string {
+	if len(e.errors) == 0 {
+		return ""
+	}
+	return e.errors[0].id
+}
+
+func (e *rpcErrors) Kind() string {
+	if len(e.errors) == 0 {
+		return ""
+	}
+	return e.errors[0].kind
+}
+
+func (e *rpcErrors) Raw() map[string]interface{} {
+	if len(e.errors) == 0 {
+		return nil
+	}
+	return e.errors[0].raw
+}
+
+func (e *rpcErrors) Errors() []RPCError {
+	res := make([]RPCError, len(e.errors))
+	for i := range e.errors {
+		res[i] = e.errors[i]
+	}
+	return res
+}
+
+type plainError struct {
+	*httpError
+	msg string
+}
+
+func (e *plainError) Error() string {
+	return e.msg
+}
+
+var (
+	_ RPCError = &rpcErrors{}
+	_ RPCError = &rpcError{}
+)
 
 // NewRequest creates a Tezos RPC request.
 func (c *RPCClient) NewRequest(ctx context.Context, method, urlStr string, body interface{}) (*http.Request, error) {
@@ -92,8 +174,12 @@ func (c *RPCClient) NewRequest(ctx context.Context, method, urlStr string, body 
 	req.Header.Add("Content-Type", mediaType)
 	req.Header.Add("Accept", mediaType)
 	req.Header.Add("User-Agent", c.UserAgent)
-	return req, nil
 
+	if ctx != nil {
+		return req.WithContext(ctx), nil
+	}
+
+	return req, nil
 }
 
 // RPCClient manages communication with a Tezos RPC server.
@@ -120,9 +206,54 @@ func NewRPCClient(httpClient *http.Client, baseURL string) (*RPCClient, error) {
 	return c, nil
 }
 
-// Get retrieves values from the API and marshals them into the provided interface.
-func (c *RPCClient) Get(ctx context.Context, req *http.Request, v interface{}) error {
-	resp, err := c.client.Do(req.WithContext(ctx))
+func (c *RPCClient) handleNormalResponse(ctx context.Context, resp *http.Response, v interface{}) error {
+	// Normal return
+	dec := json.NewDecoder(resp.Body)
+	typ := reflect.TypeOf(v)
+
+	if typ.Kind() == reflect.Chan {
+		// Handle channel
+		cases := []reflect.SelectCase{
+			reflect.SelectCase{
+				Dir:  reflect.SelectSend,
+				Chan: reflect.ValueOf(v),
+			},
+			reflect.SelectCase{
+				Dir:  reflect.SelectRecv,
+				Chan: reflect.ValueOf(ctx.Done()),
+			},
+		}
+
+		for {
+			chunkVal := reflect.New(typ.Elem())
+
+			if err := dec.Decode(chunkVal.Interface()); err != nil {
+				if err == io.EOF {
+					break
+				}
+				return err
+			}
+
+			cases[0].Send = chunkVal.Elem()
+			if chosen, _, _ := reflect.Select(cases); chosen == 1 {
+				return ctx.Err()
+			}
+		}
+
+		return nil
+	}
+
+	// Handle single object
+	if err := dec.Decode(&v); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// Do retrieves values from the API and marshals them into the provided interface.
+func (c *RPCClient) Do(req *http.Request, v interface{}) (err error) {
+	resp, err := c.client.Do(req)
 	if err != nil {
 		return err
 	}
@@ -133,23 +264,89 @@ func (c *RPCClient) Get(ctx context.Context, req *http.Request, v interface{}) e
 		}
 	}()
 
-	switch resp.StatusCode {
-	case 200:
-		return json.NewDecoder(resp.Body).Decode(&v)
-	case 500:
-		// Attempt to parse 5xx errors according to http://tezos.gitlab.io/mainnet/api/errors.html.
-		var rpcErrs []RPCError
-		err := json.NewDecoder(resp.Body).Decode(&rpcErrs)
-		if err != nil {
-			return fmt.Errorf("error decoding Tezos RPC errors: %s", err)
+	if resp.StatusCode == http.StatusNoContent {
+		return nil
+	}
+
+	statusClass := resp.StatusCode / 100
+	if statusClass == 2 {
+		if v == nil {
+			return nil
 		}
-		if len(rpcErrs) == 0 {
-			return fmt.Errorf("received a Tezos RPC error response with 0 errors")
+		return c.handleNormalResponse(req.Context(), resp, v)
+	}
+
+	// Handle errors
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return err
+	}
+
+	httpErr := httpError{
+		status:     resp.Status,
+		statusCode: resp.StatusCode,
+		body:       body,
+	}
+
+	if statusClass != 5 || !strings.Contains(resp.Header.Get("Content-Type"), "application/json") {
+		// Other errors with unknown body format (usually human readable string)
+		return &httpErr
+	}
+
+	var raw interface{}
+	if err := json.Unmarshal(body, &raw); err != nil {
+		return &plainError{&httpErr, fmt.Sprintf("tezos: error decoding RPC error: %v", err)}
+	}
+
+	// Can be an array
+	var maps []map[string]interface{}
+
+	switch e := raw.(type) {
+	case []interface{}:
+		for _, v := range e {
+			if m, ok := v.(map[string]interface{}); ok {
+				maps = append(maps, m)
+			}
 		}
-		// TODO: For now, we just return the first error. Evaluate whether it's worth it
-		// to find a way to return multiple errors (if that can happen in practice).
-		return rpcErrs[0]
+
+	case map[string]interface{}:
+		maps = []map[string]interface{}{e}
+
 	default:
-		return fmt.Errorf("unexpected response status: %s", resp.Status)
+		return &plainError{&httpErr, "tezos: error decoding RPC error"}
+	}
+
+	if len(maps) == 0 {
+		return &plainError{&httpErr, "tezos: empty error response"}
+	}
+
+	errs := make([]*rpcError, len(maps))
+
+	for i, m := range maps {
+		errID, ok := m["id"].(string)
+		if !ok {
+			return &plainError{&httpErr, "tezos: error decoding RPC error"}
+		}
+
+		errKind, ok := m["kind"].(string)
+		if !ok {
+			return &plainError{&httpErr, "tezos: error decoding RPC error"}
+		}
+
+		errs[i] = &rpcError{
+			httpError: &httpErr,
+			id:        errID,
+			kind:      errKind,
+			raw:       m,
+		}
+	}
+
+	if len(errs) == 1 {
+		return errs[0]
+	}
+
+	return &rpcErrors{
+		httpError: &httpErr,
+		errors:    errs,
 	}
 }
