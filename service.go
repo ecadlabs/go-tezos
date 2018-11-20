@@ -2,7 +2,9 @@ package tezos
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"math/big"
 	"net/http"
 	"net/url"
 	"time"
@@ -437,36 +439,47 @@ func (s *Service) MonitorNetworkPointLog(ctx context.Context, address string, re
 	return s.Client.Do(req, results)
 }
 
+type bigInt big.Int
+
+func (z *bigInt) UnmarshalJSON(data []byte) error {
+	var s string
+	if err := json.Unmarshal(data, &s); err != nil {
+		return err
+	}
+
+	return (*big.Int)(z).UnmarshalText([]byte(s))
+}
+
 // GetDelegateBalance returns a delegate's balance http://tezos.gitlab.io/mainnet/api/rpc.html#get-block-id-context-delegates-pkh-balance
-func (s *Service) GetDelegateBalance(ctx context.Context, chainID string, blockID string, pkh string) (string, error) {
+func (s *Service) GetDelegateBalance(ctx context.Context, chainID string, blockID string, pkh string) (*big.Int, error) {
 	u := "/chains/" + chainID + "/blocks/" + blockID + "/context/delegates/" + pkh + "/balance"
 	req, err := s.Client.NewRequest(ctx, http.MethodGet, u, nil)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
-	var balance string
+	var balance bigInt
 	if err := s.Client.Do(req, &balance); err != nil {
-		return "", err
+		return nil, err
 	}
 
-	return balance, err
+	return (*big.Int)(&balance), nil
 }
 
 // GetContractBalance returns a contract's balance http://tezos.gitlab.io/mainnet/api/rpc.html#get-block-id-context-contracts-contract-id-balance
-func (s *Service) GetContractBalance(ctx context.Context, chainID string, blockID string, contractID string) (string, error) {
+func (s *Service) GetContractBalance(ctx context.Context, chainID string, blockID string, contractID string) (*big.Int, error) {
 	u := "/chains/" + chainID + "/blocks/" + blockID + "/context/contracts/" + contractID + "/balance"
 	req, err := s.Client.NewRequest(ctx, http.MethodGet, u, nil)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
-	var balance string
+	var balance bigInt
 	if err := s.Client.Do(req, &balance); err != nil {
-		return "", err
+		return nil, err
 	}
 
-	return balance, err
+	return (*big.Int)(&balance), nil
 }
 
 // GetBootstrapped reads from the bootstrapped blocks stream http://tezos.gitlab.io/mainnet/api/rpc.html#get-monitor-bootstrapped
