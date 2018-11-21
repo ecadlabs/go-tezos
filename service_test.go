@@ -3,6 +3,7 @@ package tezos
 import (
 	"context"
 	"io/ioutil"
+	"math/big"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -172,7 +173,7 @@ func TestServiceGetMethods(t *testing.T) {
 			respFixture:     "fixtures/contract/delegate_balance.json",
 			respContentType: "application/json",
 			expectedPath:    "/chains/main/blocks/head/context/delegates/tz3WXYtyDUNL91qfiCJtVUX746QpNv5i5ve5/balance",
-			expectedValue:   "13490453135591",
+			expectedValue:   big.NewInt(13490453135591),
 		},
 		{
 			get: func(s *Service) (interface{}, error) {
@@ -181,7 +182,7 @@ func TestServiceGetMethods(t *testing.T) {
 			respFixture:     "fixtures/contract/contract_balance.json",
 			respContentType: "application/json",
 			expectedPath:    "/chains/main/blocks/head/context/contracts/tz3WXYtyDUNL91qfiCJtVUX746QpNv5i5ve5/balance",
-			expectedValue:   "4700354460878",
+			expectedValue:   big.NewInt(4700354460878),
 		},
 		{
 			get: func(s *Service) (interface{}, error) {
