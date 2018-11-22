@@ -282,7 +282,7 @@ func (s *Service) GetNetworkPeerLog(ctx context.Context, peerID string) ([]*Netw
 	return log, err
 }
 
-// MonitorNetworkPeerLog monitor network events related to a given peer.
+// MonitorNetworkPeerLog monitors network events related to a given peer.
 // https://tezos.gitlab.io/mainnet/api/rpc.html#get-network-peers-peer-id-log
 func (s *Service) MonitorNetworkPeerLog(ctx context.Context, peerID string, results chan<- []*NetworkPeerLogEntry) error {
 	req, err := s.Client.NewRequest(ctx, http.MethodGet, "/network/peers/"+peerID+"/log?monitor", nil)
@@ -490,4 +490,27 @@ func (s *Service) GetBootstrapped(ctx context.Context, results chan<- *Bootstrap
 	}
 
 	return s.Client.Do(req, results)
+}
+
+type InvalidBlock struct {
+	Block string     `json:"block"`
+	Level int32      `json:"level"`
+	Error []RPCError `json:"error"`
+}
+
+// GetInvalidBlocks lists blocks that have been declared invalid along with the errors that led to them being declared invalid.
+// https://tezos.gitlab.io/alphanet/api/rpc.html#get-chains-chain-id-invalid-blocks
+func (s *Service) GetInvalidBlocks(ctx context.Context, chainID string) ([]InvalidBlock, error) {
+	u := "/chains/" + chainID + "/invalid_blocks"
+	req, err := s.Client.NewRequest(ctx, http.MethodGet, u, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	invalidBlocks := []InvalidBlock{}
+	if err := s.Client.Do(req, &invalidBlocks); err != nil {
+		return nil, err
+	}
+
+	return invalidBlocks, nil
 }

@@ -262,6 +262,15 @@ func TestServiceGetMethods(t *testing.T) {
 			errMsg:       `tezos: HTTP status 404`,
 			errType:      (*httpError)(nil),
 		},
+		{
+			get: func(s *Service) (interface{}, error) {
+				return s.GetInvalidBlocks(ctx, "main")
+			},
+			respFixture:     "fixtures/chains/invalid_blocks.json",
+			respContentType: "application/json",
+			expectedPath:    "/chains/main/invalid_blocks",
+			expectedValue:   []InvalidBlock{InvalidBlock{Block: "BM31cpbqfXu3WNYLQ8Tch21tXjcnwbyFzvcqohHL1BSnkhnhzwp", Level: 42, Error: []RPCError{}}},
+		},
 	}
 
 	for _, test := range tests {
