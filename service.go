@@ -514,3 +514,19 @@ func (s *Service) GetInvalidBlocks(ctx context.Context, chainID string) ([]Inval
 
 	return invalidBlocks, nil
 }
+
+// GetBlock returns information about a Tezos block
+func (s *Service) GetBlock(ctx context.Context, chainID, blockID string) (*Block, error) {
+	u := "/chains/" + chainID + "/blocks/" + blockID
+	req, err := s.Client.NewRequest(ctx, http.MethodGet, u, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	block := Block{}
+	if err := s.Client.Do(req, &block); err != nil {
+		return nil, err
+	}
+
+	return &block, nil
+}

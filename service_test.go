@@ -271,6 +271,15 @@ func TestServiceGetMethods(t *testing.T) {
 			expectedPath:    "/chains/main/invalid_blocks",
 			expectedValue:   []InvalidBlock{InvalidBlock{Block: "BM31cpbqfXu3WNYLQ8Tch21tXjcnwbyFzvcqohHL1BSnkhnhzwp", Level: 42, Error: []RPCError{}}},
 		},
+		{
+			get: func(s *Service) (interface{}, error) {
+				return s.GetBlock(ctx, "main", "BM31cpbqfXu3WNYLQ8Tch21tXjcnwbyFzvcqohHL1BSnkhnhzwp")
+			},
+			respFixture:     "fixtures/chains/block.json",
+			respContentType: "application/json",
+			expectedPath:    "/chains/main/blocks/BM31cpbqfXu3WNYLQ8Tch21tXjcnwbyFzvcqohHL1BSnkhnhzwp",
+			expectedValue:   Block{},
+		},
 	}
 
 	for _, test := range tests {
