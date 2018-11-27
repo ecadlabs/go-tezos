@@ -158,6 +158,13 @@ type MempoolOperations struct {
 	Unprocessed   []*OperationAlt          `json:"unprocessed"`
 }
 
+// InvalidBlock represents invalid block hash along with the errors that led to it being declared invalid
+type InvalidBlock struct {
+	Block string `json:"block"`
+	Level int    `json:"level"`
+	Error Errors `json:"error"`
+}
+
 type bigIntStr big.Int
 
 func (z *bigIntStr) UnmarshalJSON(data []byte) error {
@@ -306,7 +313,7 @@ func (s *Service) GetNetworkPeerLog(ctx context.Context, peerID string) ([]*Netw
 	return log, err
 }
 
-// MonitorNetworkPeerLog monitor network events related to a given peer.
+// MonitorNetworkPeerLog monitors network events related to a given peer.
 // https://tezos.gitlab.io/mainnet/api/rpc.html#get-network-peers-peer-id-log
 func (s *Service) MonitorNetworkPeerLog(ctx context.Context, peerID string, results chan<- []*NetworkPeerLogEntry) error {
 	req, err := s.Client.NewRequest(ctx, http.MethodGet, "/network/peers/"+peerID+"/log?monitor", nil)
@@ -452,7 +459,7 @@ func (s *Service) GetNetworkPointLog(ctx context.Context, address string) ([]*Ne
 	return log, err
 }
 
-// MonitorNetworkPointLog monitors network events related to an `IP:addr`.
+// MonitorNetworkPointLog monitorss network events related to an `IP:addr`.
 // https://tezos.gitlab.io/mainnet/api/rpc.html#get-network-peers-peer-id-log
 func (s *Service) MonitorNetworkPointLog(ctx context.Context, address string, results chan<- []*NetworkPointLogEntry) error {
 	req, err := s.Client.NewRequest(ctx, http.MethodGet, "/network/points/"+address+"/log?monitor", nil)
@@ -518,4 +525,20 @@ func (s *Service) GetMempoolPendingOperations(ctx context.Context, chainID strin
 	}
 
 	return &ops, nil
+}
+
+// GetInvalidBlocks lists blocks that have been declared invalid along with the errors that led to them being declared invalid.
+// https://tezos.gitlab.io/alphanet/api/rpc.html#get-chains-chain-id-invalid-blocks
+func (s *Service) GetInvalidBlocks(ctx context.Context, chainID string) ([]*InvalidBlock, error) {
+	req, err := s.Client.NewRequest(ctx, http.MethodGet, "/chains/"+chainID+"/invalid_blocks", nil)
+	if err != nil {
+		return nil, err
+	}
+
+	var invalidBlocks []*InvalidBlock
+	if err := s.Client.Do(req, &invalidBlocks); err != nil {
+		return nil, err
+	}
+
+	return invalidBlocks, nil
 }
