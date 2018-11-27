@@ -51,7 +51,7 @@ func TestServiceGetMethods(t *testing.T) {
 			respFixture:     "fixtures/network/connections.json",
 			respContentType: "application/json",
 			expectedPath:    "/network/connections",
-			expectedValue:   []*NetworkConnection{&NetworkConnection{Incoming: false, PeerID: "idt5qvkLiJ15rb6yJU1bjpGmdyYnPJ", IDPoint: NetworkAddress{Addr: "::ffff:34.253.64.43", Port: 0x2604}, RemoteSocketPort: 0x2604, Versions: []NetworkVersion{NetworkVersion{Name: "TEZOS_ALPHANET_2018-07-31T16:22:39Z", Major: 0x0, Minor: 0x0}}, Private: false, LocalMetadata: NetworkMetadata{DisableMempool: false, PrivateNode: false}, RemoteMetadata: NetworkMetadata{DisableMempool: false, PrivateNode: false}}, &NetworkConnection{Incoming: true, PeerID: "ids8VJTHEuyND6B8ahGgXPAJ3BDp1c", IDPoint: NetworkAddress{Addr: "::ffff:176.31.255.202", Port: 0x2604}, RemoteSocketPort: 0x2604, Versions: []NetworkVersion{NetworkVersion{Name: "TEZOS_ALPHANET_2018-07-31T16:22:39Z", Major: 0x0, Minor: 0x0}}, Private: true, LocalMetadata: NetworkMetadata{DisableMempool: true, PrivateNode: true}, RemoteMetadata: NetworkMetadata{DisableMempool: true, PrivateNode: true}}},
+			expectedValue:   []*NetworkConnection{&NetworkConnection{Incoming: false, PeerID: "idt5qvkLiJ15rb6yJU1bjpGmdyYnPJ", IDPoint: NetworkAddress{Addr: "::ffff:34.253.64.43", Port: 0x2604}, RemoteSocketPort: 0x2604, Versions: []*NetworkVersion{&NetworkVersion{Name: "TEZOS_ALPHANET_2018-07-31T16:22:39Z", Major: 0x0, Minor: 0x0}}, Private: false, LocalMetadata: NetworkMetadata{DisableMempool: false, PrivateNode: false}, RemoteMetadata: NetworkMetadata{DisableMempool: false, PrivateNode: false}}, &NetworkConnection{Incoming: true, PeerID: "ids8VJTHEuyND6B8ahGgXPAJ3BDp1c", IDPoint: NetworkAddress{Addr: "::ffff:176.31.255.202", Port: 0x2604}, RemoteSocketPort: 0x2604, Versions: []*NetworkVersion{&NetworkVersion{Name: "TEZOS_ALPHANET_2018-07-31T16:22:39Z", Major: 0x0, Minor: 0x0}}, Private: true, LocalMetadata: NetworkMetadata{DisableMempool: true, PrivateNode: true}, RemoteMetadata: NetworkMetadata{DisableMempool: true, PrivateNode: true}}},
 		},
 		{
 			get:             func(s *Service) (interface{}, error) { return s.GetNetworkPeers(ctx, "") },
@@ -170,7 +170,7 @@ func TestServiceGetMethods(t *testing.T) {
 			get: func(s *Service) (interface{}, error) {
 				return s.GetDelegateBalance(ctx, "main", "head", "tz3WXYtyDUNL91qfiCJtVUX746QpNv5i5ve5")
 			},
-			respFixture:     "fixtures/contract/delegate_balance.json",
+			respFixture:     "fixtures/block/delegate_balance.json",
 			respContentType: "application/json",
 			expectedPath:    "/chains/main/blocks/head/context/delegates/tz3WXYtyDUNL91qfiCJtVUX746QpNv5i5ve5/balance",
 			expectedValue:   big.NewInt(13490453135591),
@@ -179,7 +179,7 @@ func TestServiceGetMethods(t *testing.T) {
 			get: func(s *Service) (interface{}, error) {
 				return s.GetContractBalance(ctx, "main", "head", "tz3WXYtyDUNL91qfiCJtVUX746QpNv5i5ve5")
 			},
-			respFixture:     "fixtures/contract/contract_balance.json",
+			respFixture:     "fixtures/block/contract_balance.json",
 			respContentType: "application/json",
 			expectedPath:    "/chains/main/blocks/head/context/contracts/tz3WXYtyDUNL91qfiCJtVUX746QpNv5i5ve5/balance",
 			expectedValue:   big.NewInt(4700354460878),
@@ -207,6 +207,15 @@ func TestServiceGetMethods(t *testing.T) {
 				&BootstrappedBlock{Block: "BKiqiXgqAPHX4bRzk2p1jEKHijaxLPdcQi8hqVfGhBwngcticEk", Timestamp: timeMustUnmarshalText("2018-09-17T00:48:32Z")},
 			},
 		},
+		{
+			get: func(s *Service) (interface{}, error) {
+				return s.GetMempoolPendingOperations(ctx, "main")
+			},
+			respFixture:     "fixtures/block/pending_operations.json",
+			respContentType: "application/json",
+			expectedPath:    "/chains/main/mempool/pending_operations",
+			expectedValue:   &MempoolOperations{Applied: []*Operation{&Operation{Hash: "opLHEC3xm8qPRP9g44oBpB45RzRVUoMX1NsX75sKKtNvA8pvSm2", Branch: "BMLvebSvhTyZ7GG2vykV8hpGEc8egzcwn9fc3JJKrtCk8FssT9M", Contents: OperationElements{&EndorsementOperationElem{GenericOperationElem: GenericOperationElem{Kind: "endorsement"}, Level: 208806}}, Signature: "sigtTW5Y3xQaTKo5vEiqr8zG4YnPv7GbVbUgo7XYw7UZduz9jvdxzFbKUmftKFsFGH1UEZBbxyhyH5DLUUMh5KrQ3MENzUwC"}, &Operation{Hash: "ooSEFHRfArRSjeWhHhcmBa5aL2E3MqsN1HucCm3xiR2gLuzGSYN", Branch: "BMLvebSvhTyZ7GG2vykV8hpGEc8egzcwn9fc3JJKrtCk8FssT9M", Contents: OperationElements{&EndorsementOperationElem{GenericOperationElem: GenericOperationElem{Kind: "endorsement"}, Level: 208806}}, Signature: "sigeVFaHCGk9S6P9MhNNyZjHMcfPgYZw5cTwejtbGDEZdp58XKcxVkP3CFCKiPHesiEDqCxvrPGHZUpQLNmmqaSgrmv1ePNZ"}}, Refused: []*OperationWithErrorAlt{}, BranchRefused: []*OperationWithErrorAlt{}, BranchDelayed: []*OperationWithErrorAlt{&OperationWithErrorAlt{Operation: Operation{Protocol: "PsYLVpVvgbLhAhoqAkMFUo6gudkJ9weNXhUYCiLDzcUpFpkk8Wt", Hash: "oo1Z19oCkTWibLp7mJwFKP3UFVxuf6eV1iNWwJS7gZs8uZbrduS", Branch: "BMTSuKyFBhgmD7e3UDt9jLtjC2ftTUosTGEiiYc61Lu6F3xSkvJ", Contents: OperationElements{&EndorsementOperationElem{GenericOperationElem: GenericOperationElem{Kind: "endorsement"}, Level: 208804}}, Signature: "sigZXm4SGNcHwh5qsfjsFYmhSCwtimifq4EPje5rnJxvNDkymC2o3Yv8cJWgug3dDxiQWDexRDeBBu8Pf5qFxA6SckKypiau"}, Error: Errors{&GenericError{Kind: "temporary", ID: "proto.002-PsYLVpVv.operation.wrong_endorsement_predecessor"}}}, &OperationWithErrorAlt{Operation: Operation{Protocol: "PsYLVpVvgbLhAhoqAkMFUo6gudkJ9weNXhUYCiLDzcUpFpkk8Wt", Hash: "ooCaHemWe76uiBLDUXY2uhbhuiyLG7w7rqUFaJPxr7v56z6DVPS", Branch: "BL1pULCBFDJkqDHmYqK8yrVM3mHQHi72JFg6dT5qJ96ncjDbPpn", Contents: OperationElements{&EndorsementOperationElem{GenericOperationElem: GenericOperationElem{Kind: "endorsement"}, Level: 208773}}, Signature: "sigpkWpkY25KDBo7YcaLYx5Q61ypcfFWXjXgvbMG6uFrnStboCxCoCnJbDNri7CGzad35zLUvXCVxu2uj4WBSPgfxsnGKUBn"}, Error: Errors{&GenericError{Kind: "temporary", ID: "proto.002-PsYLVpVv.operation.wrong_endorsement_predecessor"}}}}, Unprocessed: []*OperationAlt{}},
+		},
 		// Handling 5xx errors from the Tezos node with RPC error information.
 		{
 			get: func(s *Service) (interface{}, error) {
@@ -218,7 +227,7 @@ func TestServiceGetMethods(t *testing.T) {
 			respFixture:     "fixtures/error.json",
 			respContentType: "application/json",
 			expectedPath:    "/network/stat",
-			errMsg:          `tezos: RPC error (kind = "permanent", id = "proto.002-PsYLVpVv.context.storage_error")`,
+			errMsg:          `tezos: kind = "permanent", id = "proto.002-PsYLVpVv.context.storage_error"`,
 			errType:         (*rpcError)(nil),
 		},
 		// Handling 5xx errors from the Tezos node with empty RPC error information.
