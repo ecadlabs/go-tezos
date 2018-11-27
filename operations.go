@@ -73,7 +73,7 @@ type EndorsementOperationMetadata struct {
 	Slots          []uint           `json:"slots"`
 }
 
-// BalanceUpdate represents balance update operation
+// BalanceUpdate represents a balance update operation
 type BalanceUpdate struct {
 	Kind     string        `json:"kind"`
 	Category string        `json:"category"`
@@ -122,7 +122,7 @@ type OperationWithError struct {
 	Error Errors `json:"error"`
 }
 
-//OperationWithErrorAlt is a heterogeneously encoded OperationWithError
+// OperationWithErrorAlt is a heterogeneously encoded OperationWithError
 type OperationWithErrorAlt OperationWithError
 
 // UnmarshalJSON implements json.Unmarshaler

@@ -61,7 +61,7 @@ type RPCError interface {
 	Errors() []Error // returns all errors as a slice
 }
 
-// Errors is a slice of Error with custom JSON uunmarshaller
+// Errors is a slice of Error with custom JSON unmarshaller
 type Errors []Error
 
 // UnmarshalJSON implements json.Unmarshaler
