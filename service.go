@@ -88,6 +88,8 @@ type NetworkPeer struct {
 	LastMiss                  *NetworkConnectionTimestamp `json:"last_miss"`
 }
 
+// networkPeerWithID is a heterogeneously encoded NetworkPeer with ID as a first array member
+// See OperationAlt for details
 type networkPeerWithID NetworkPeer
 
 func (n *networkPeerWithID) UnmarshalJSON(data []byte) error {
@@ -116,6 +118,8 @@ type NetworkPoint struct {
 	LastMiss                  time.Time         `json:"last_miss"`
 }
 
+// networkPointAlt is a heterogeneously encoded NetworkPoint with address as a first array member
+// See OperationAlt for details
 type networkPointAlt NetworkPoint
 
 func (n *networkPointAlt) UnmarshalJSON(data []byte) error {
