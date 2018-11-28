@@ -3,6 +3,7 @@ package tezos
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 )
 
 func unmarshalHeterogeneousJSONArray(data []byte, v ...interface{}) error {
@@ -22,4 +23,12 @@ func unmarshalHeterogeneousJSONArray(data []byte, v ...interface{}) error {
 	}
 
 	return nil
+}
+
+func jsonifyWhatever(i interface{}) string {
+	jsonb, err := json.Marshal(i)
+	if err != nil {
+		log.Panic(err)
+	}
+	return string(jsonb)
 }
