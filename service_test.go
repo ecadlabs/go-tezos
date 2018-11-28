@@ -282,11 +282,11 @@ func TestServiceGetMethods(t *testing.T) {
 		},
 		{
 			get: func(s *Service) (interface{}, error) {
-				return s.GetBlock(ctx, "main", "BM31cpbqfXu3WNYLQ8Tch21tXjcnwbyFzvcqohHL1BSnkhnhzwp")
+				return s.GetBlock(ctx, "main", "BMae4Jt51CeNp99TmzidjyjCEGhSRhDZsnLyY2tU9LsHmkUqvye")
 			},
 			respFixture:     "fixtures/chains/block.json",
 			respContentType: "application/json",
-			expectedPath:    "/chains/main/blocks/BM31cpbqfXu3WNYLQ8Tch21tXjcnwbyFzvcqohHL1BSnkhnhzwp",
+			expectedPath:    "/chains/main/blocks/BMae4Jt51CeNp99TmzidjyjCEGhSRhDZsnLyY2tU9LsHmkUqvye",
 			expectedValue:   Block{},
 		},
 	}

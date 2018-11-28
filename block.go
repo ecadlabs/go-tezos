@@ -2,6 +2,8 @@ package tezos
 
 import (
 	"encoding/json"
+	"fmt"
+	"log"
 	"time"
 )
 
@@ -31,6 +33,7 @@ type GenericTestChainStatus struct {
 	Status string `json:"status"`
 }
 
+// GetStatus gets the TestChainStatusType's Status field
 func (tcs GenericTestChainStatus) GetStatus() string {
 	return tcs.Status
 }
@@ -73,17 +76,18 @@ type LevelType struct {
 	ExpectedCommitment   bool  `json:"expected_commitment"`
 }
 
-// BalanceUpdatesType is a variable structure depending on the Kind field
-type BalanceUpdatesType interface {
+// BalanceUpdateType is a variable structure depending on the Kind field
+type BalanceUpdateType interface {
 	GetKind() string
 }
 
 // GenericBalanceUpdate holds the common values among all BalanceUpdatesType variants
 type GenericBalanceUpdate struct {
 	Kind   string `json:"kind"`
-	Change int64  `json:"change"`
+	Change string `json:"change"`
 }
 
+// GetKind returns the BalanceUpdateType's Kind field
 func (gbu GenericBalanceUpdate) GetKind() string {
 	return gbu.Kind
 }
@@ -102,6 +106,41 @@ type FreezerBalanceUpdate struct {
 	Level    int32  `json:"level"`
 }
 
+type BalanceUpdatesType []BalanceUpdateType
+
+func (bus *BalanceUpdatesType) UnmarshalJSON(data []byte) error {
+	aTemp := []struct {
+		Kind string `json:"kind"`
+	}{}
+	if err := json.Unmarshal(data, &aTemp); err != nil {
+		return err
+	}
+	*bus = make(BalanceUpdatesType, len(aTemp))
+
+	for i, bu := range aTemp {
+		// Resolve the multi-variant BalanceUpdates field
+		switch bu.Kind {
+		case "contract":
+			cbu := ContractBalanceUpdate{GenericBalanceUpdate: GenericBalanceUpdate{Kind: bu.Kind}}
+			(*bus)[i] = cbu
+		case "freezer":
+			fbu := FreezerBalanceUpdate{GenericBalanceUpdate: GenericBalanceUpdate{Kind: bu.Kind}}
+			(*bus)[i] = fbu
+		default:
+			return fmt.Errorf("Unknown BalanceUpdates.Kind: %v", bu.Kind)
+		}
+	}
+
+	log.Println("xxx")
+
+	type tempType BalanceUpdatesType
+
+	err := json.Unmarshal(data, (*tempType)(bus))
+	log.Println(jsonifyWhatever(bus))
+	log.Println(err)
+	return err
+}
+
 // BlockHeaderMetadata is a part of the Tezos block data
 type BlockHeaderMetadata struct {
 	Protocol               string                       `json:"protocol"`
@@ -117,21 +156,24 @@ type BlockHeaderMetadata struct {
 	NonceHash              string                       `json:"nonce_hash"`
 	ConsumedGas            string                       `json:"consumed_gas"` // TODO: replace with bigIntStr when merged
 	Deactivated            []string                     `json:"deactivated"`
-	BalanceUpdates         []BalanceUpdatesType         `json:"balance_updates"`
+	BalanceUpdates         BalanceUpdatesType           `json:"balance_updates"`
 }
 
+// UnmarshalJSON unmarshals the BlockHeaderMetadata JSON
 func (bhm *BlockHeaderMetadata) UnmarshalJSON(data []byte) error {
 	var temp struct {
 		TestChainStatus struct {
 			Status string `json:"status"`
-		}
-		BalanceUpdates struct {
+		} `json:"test_chain_status"`
+		BalanceUpdates []struct {
 			Kind string `json:"kind"`
-		}
+		} `json:"balance_updates"`
 	}
 	if err := json.Unmarshal(data, &temp); err != nil {
 		return err
 	}
+
+	log.Println(temp)
 
 	// Resolve the multi-variant TestChainStatus field
 	switch temp.TestChainStatus.Status {
@@ -141,36 +183,17 @@ func (bhm *BlockHeaderMetadata) UnmarshalJSON(data []byte) error {
 		bhm.TestChainStatus = &ForkingTestChainStatus{}
 	case "running":
 		bhm.TestChainStatus = &RunningTestChainStatus{}
+	default:
+		return fmt.Errorf("Unknown TestChainStatus.Status: %v", temp.TestChainStatus.Status)
 	}
-	// Unmarshal depends on what bhm.TestChainStatus is set to
-	if err := json.Unmarshal(data, bhm.TestChainStatus); err != nil {
-		return err
-	}
-
-	// Resolve the multi-variant BalanceUpdates field
-	switch temp.BalanceUpdates.Kind {
-	case "contract":
-		cbus := []ContractBalanceUpdate{}
-		if err := json.Unmarshal(data, &cbus); err != nil {
-			return err
-		}
-		bhm.BalanceUpdates = make([]BalanceUpdatesType, len(cbus))
-		for i, bu := range cbus {
-			bhm.BalanceUpdates[i] = bu
-		}
-	case "freezer":
-		fbus := []FreezerBalanceUpdate{}
-		if err := json.Unmarshal(data, &fbus); err != nil {
-			return err
-		}
-		bhm.BalanceUpdates = make([]BalanceUpdatesType, len(fbus))
-		for i, bu := range fbus {
-			bhm.BalanceUpdates[i] = bu
-		}
-	}
+	log.Println("blah2")
+	log.Println(jsonifyWhatever(bhm))
 
 	type tempBHM BlockHeaderMetadata
-	return json.Unmarshal(data, (*tempBHM)(bhm))
+	err := json.Unmarshal(data, (*tempBHM)(bhm))
+
+	log.Println(jsonifyWhatever(bhm))
+	return err
 }
 
 // Block holds information about a Tezos block
