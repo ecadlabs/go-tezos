@@ -115,30 +115,34 @@ func (bus *BalanceUpdatesType) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, &aTemp); err != nil {
 		return err
 	}
-	*bus = make(BalanceUpdatesType, len(aTemp))
 
+	aRaw := []json.RawMessage{}
+	if err := json.Unmarshal(data, &aRaw); err != nil {
+		return err
+	}
+
+	*bus = make(BalanceUpdatesType, len(aTemp))
 	for i, bu := range aTemp {
 		// Resolve the multi-variant BalanceUpdates field
 		switch bu.Kind {
 		case "contract":
 			cbu := ContractBalanceUpdate{GenericBalanceUpdate: GenericBalanceUpdate{Kind: bu.Kind}}
+			if err := json.Unmarshal(aRaw[i], &cbu); err != nil {
+				return err
+			}
 			(*bus)[i] = cbu
 		case "freezer":
 			fbu := FreezerBalanceUpdate{GenericBalanceUpdate: GenericBalanceUpdate{Kind: bu.Kind}}
+			if err := json.Unmarshal(aRaw[i], &fbu); err != nil {
+				return err
+			}
 			(*bus)[i] = fbu
 		default:
 			return fmt.Errorf("Unknown BalanceUpdates.Kind: %v", bu.Kind)
 		}
 	}
 
-	log.Println("xxx")
-
-	type tempType BalanceUpdatesType
-
-	err := json.Unmarshal(data, (*tempType)(bus))
-	log.Println(jsonifyWhatever(bus))
-	log.Println(err)
-	return err
+	return nil
 }
 
 // BlockHeaderMetadata is a part of the Tezos block data
@@ -173,8 +177,6 @@ func (bhm *BlockHeaderMetadata) UnmarshalJSON(data []byte) error {
 		return err
 	}
 
-	log.Println(temp)
-
 	// Resolve the multi-variant TestChainStatus field
 	switch temp.TestChainStatus.Status {
 	case "not_running":
@@ -186,8 +188,7 @@ func (bhm *BlockHeaderMetadata) UnmarshalJSON(data []byte) error {
 	default:
 		return fmt.Errorf("Unknown TestChainStatus.Status: %v", temp.TestChainStatus.Status)
 	}
-	log.Println("blah2")
-	log.Println(jsonifyWhatever(bhm))
+	log.Println("BlockHeaderMetadata")
 
 	type tempBHM BlockHeaderMetadata
 	err := json.Unmarshal(data, (*tempBHM)(bhm))
