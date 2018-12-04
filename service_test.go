@@ -303,7 +303,7 @@ func TestServiceGetMethods(t *testing.T) {
 					Predecessor:    "BLockGenesisGenesisGenesisGenesisGenesis53242fHv7C1",
 					Timestamp:      timeMustParse("2018-07-31T16:22:39Z"),
 					OperationsHash: "LLoZS2LW3rEi7KYU4ouBQtorua37aWWCtpDmv1n2x3xoKi6sVXLWp",
-					Fitness:        [][]byte{},
+					Fitness:        []HexBytes{},
 					Context:        "CoVWEvFsUNZBPhv61p7J8Uneh5Du2M2wJNpJeMVcDuSfH9pChueg",
 				},
 				Metadata: BlockHeaderMetadata{
