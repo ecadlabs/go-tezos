@@ -1,25 +1,39 @@
 package tezos
 
 import (
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"time"
 )
 
+// HexBytes represents bytes as a JSON string of hexadecimal digits
+type HexBytes []byte
+
+// UnmarshalJSON umarshalls a hex string to bytes
+func (hb *HexBytes) UnmarshalJSON(data []byte) error {
+	if len(data)%2 != 0 {
+		return fmt.Errorf("Length of hex string not even: %v", string(data))
+	}
+	*hb = make(HexBytes, (len(data)-2)/2)
+	_, err := hex.Decode(*hb, data[1:len(data)-1])
+	return err
+}
+
 // RawBlockHeader is a part of the Tezos block data
 type RawBlockHeader struct {
-	Level           int32     `json:"level"`
-	Proto           byte      `json:"proto"`
-	Predecessor     string    `json:"predecessor"`
-	Timestamp       time.Time `json:"timestamp"`
-	ValidationPass  byte      `json:"validation_pass"`
-	OperationsHash  string    `json:"operations_hash"`
-	Fitness         [][]byte  `json:"fitness"`
-	Context         string    `json:"context"`
-	Priority        int16     `json:"priority"`
-	ProofOfWorkNone []byte    `json:"proof_of_work_nonce"`
-	SeedNonceHash   string    `json:"seed_nonce_hash"`
-	Signature       string    `json:"signature"`
+	Level            int32      `json:"level"`
+	Proto            byte       `json:"proto"`
+	Predecessor      string     `json:"predecessor"`
+	Timestamp        time.Time  `json:"timestamp"`
+	ValidationPass   byte       `json:"validation_pass"`
+	OperationsHash   string     `json:"operations_hash"`
+	Fitness          []HexBytes `json:"fitness"`
+	Context          string     `json:"context"`
+	Priority         int16      `json:"priority"`
+	ProofOfWorkNonce HexBytes   `json:"proof_of_work_nonce"`
+	SeedNonceHash    string     `json:"seed_nonce_hash"`
+	Signature        string     `json:"signature"`
 }
 
 // TestChainStatusType is a variable structure depending on the Status field
