@@ -19,6 +19,14 @@ func timeMustUnmarshalText(text string) (t time.Time) {
 	return
 }
 
+func timeMustParse(tm string) time.Time {
+	t, err := time.Parse(time.RFC3339, tm)
+	if err != nil {
+		panic(err)
+	}
+	return t
+}
+
 func TestServiceGetMethods(t *testing.T) {
 	ctx := context.Background()
 	tests := []struct {
@@ -282,12 +290,31 @@ func TestServiceGetMethods(t *testing.T) {
 		},
 		{
 			get: func(s *Service) (interface{}, error) {
-				return s.GetBlock(ctx, "main", "BMae4Jt51CeNp99TmzidjyjCEGhSRhDZsnLyY2tU9LsHmkUqvye")
+				return s.GetBlock(ctx, "main", "0")
 			},
-			respFixture:     "fixtures/chains/block.json",
+			respFixture:     "fixtures/chains/block0.json",
 			respContentType: "application/json",
-			expectedPath:    "/chains/main/blocks/BMae4Jt51CeNp99TmzidjyjCEGhSRhDZsnLyY2tU9LsHmkUqvye",
-			expectedValue:   Block{},
+			expectedPath:    "/chains/main/blocks/0",
+			expectedValue: &Block{
+				Protocol: "PrihK96nBAFSxVL1GLJTVhu9YnzkMFiBeuJRPA8NwuZVZCE1L6i",
+				ChainID:  "NetXZUqeBjDnWde",
+				Hash:     "BLockGenesisGenesisGenesisGenesisGenesis53242fHv7C1",
+				Header: RawBlockHeader{
+					Predecessor:    "BLockGenesisGenesisGenesisGenesisGenesis53242fHv7C1",
+					Timestamp:      timeMustParse("2018-07-31T16:22:39Z"),
+					OperationsHash: "LLoZS2LW3rEi7KYU4ouBQtorua37aWWCtpDmv1n2x3xoKi6sVXLWp",
+					Fitness:        [][]byte{},
+					Context:        "CoVWEvFsUNZBPhv61p7J8Uneh5Du2M2wJNpJeMVcDuSfH9pChueg",
+				},
+				Metadata: BlockHeaderMetadata{
+					Protocol:               "PrihK96nBAFSxVL1GLJTVhu9YnzkMFiBeuJRPA8NwuZVZCE1L6i",
+					NextProtocol:           "Ps6mwMrF2ER2s51cp9yYpjDcuzQjsc2yAz8bQsRgdaRxw4Fk95H",
+					TestChainStatus:        &NotRunningTestChainStatus{GenericTestChainStatus: GenericTestChainStatus{Status: "not_running"}},
+					MaxBlockHeaderLength:   105,
+					MaxOperationListLength: []MaxOperationListLengthType{},
+				},
+				Operations: []Operation{},
+			},
 		},
 	}
 

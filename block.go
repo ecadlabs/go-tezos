@@ -3,7 +3,6 @@ package tezos
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"time"
 )
 
@@ -188,21 +187,19 @@ func (bhm *BlockHeaderMetadata) UnmarshalJSON(data []byte) error {
 	default:
 		return fmt.Errorf("Unknown TestChainStatus.Status: %v", temp.TestChainStatus.Status)
 	}
-	log.Println("BlockHeaderMetadata")
 
 	type tempBHM BlockHeaderMetadata
 	err := json.Unmarshal(data, (*tempBHM)(bhm))
 
-	log.Println(jsonifyWhatever(bhm))
 	return err
 }
 
 // Block holds information about a Tezos block
 type Block struct {
-	Protocol string              `json:"protocol"`
-	ChainID  string              `json:"chain_id"`
-	Hash     string              `json:"hash"`
-	Header   RawBlockHeader      `json:"header"`
-	Metadata BlockHeaderMetadata `json:"metadata"`
-	//Operations []Operation `json:"operations"`
+	Protocol   string              `json:"protocol"`
+	ChainID    string              `json:"chain_id"`
+	Hash       string              `json:"hash"`
+	Header     RawBlockHeader      `json:"header"`
+	Metadata   BlockHeaderMetadata `json:"metadata"`
+	Operations []Operation         `json:"operations"`
 }
