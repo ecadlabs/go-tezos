@@ -105,45 +105,6 @@ type FreezerBalanceUpdate struct {
 	Level    int32  `json:"level"`
 }
 
-type BalanceUpdatesType []BalanceUpdateType
-
-func (bus *BalanceUpdatesType) UnmarshalJSON(data []byte) error {
-	aTemp := []struct {
-		Kind string `json:"kind"`
-	}{}
-	if err := json.Unmarshal(data, &aTemp); err != nil {
-		return err
-	}
-
-	aRaw := []json.RawMessage{}
-	if err := json.Unmarshal(data, &aRaw); err != nil {
-		return err
-	}
-
-	*bus = make(BalanceUpdatesType, len(aTemp))
-	for i, bu := range aTemp {
-		// Resolve the multi-variant BalanceUpdates field
-		switch bu.Kind {
-		case "contract":
-			cbu := ContractBalanceUpdate{GenericBalanceUpdate: GenericBalanceUpdate{Kind: bu.Kind}}
-			if err := json.Unmarshal(aRaw[i], &cbu); err != nil {
-				return err
-			}
-			(*bus)[i] = cbu
-		case "freezer":
-			fbu := FreezerBalanceUpdate{GenericBalanceUpdate: GenericBalanceUpdate{Kind: bu.Kind}}
-			if err := json.Unmarshal(aRaw[i], &fbu); err != nil {
-				return err
-			}
-			(*bus)[i] = fbu
-		default:
-			return fmt.Errorf("Unknown BalanceUpdates.Kind: %v", bu.Kind)
-		}
-	}
-
-	return nil
-}
-
 // BlockHeaderMetadata is a part of the Tezos block data
 type BlockHeaderMetadata struct {
 	Protocol               string                       `json:"protocol"`
@@ -159,7 +120,7 @@ type BlockHeaderMetadata struct {
 	NonceHash              string                       `json:"nonce_hash"`
 	ConsumedGas            string                       `json:"consumed_gas"` // TODO: replace with bigIntStr when merged
 	Deactivated            []string                     `json:"deactivated"`
-	BalanceUpdates         BalanceUpdatesType           `json:"balance_updates"`
+	BalanceUpdates         []BalanceUpdate              `json:"balance_updates"`
 }
 
 // UnmarshalJSON unmarshals the BlockHeaderMetadata JSON
@@ -189,9 +150,7 @@ func (bhm *BlockHeaderMetadata) UnmarshalJSON(data []byte) error {
 	}
 
 	type tempBHM BlockHeaderMetadata
-	err := json.Unmarshal(data, (*tempBHM)(bhm))
-
-	return err
+	return json.Unmarshal(data, (*tempBHM)(bhm))
 }
 
 // Block holds information about a Tezos block
