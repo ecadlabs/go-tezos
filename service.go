@@ -2,7 +2,6 @@ package tezos
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"math/big"
 	"net/http"
@@ -165,15 +164,11 @@ type InvalidBlock struct {
 	Error Errors `json:"error"`
 }
 
+// Just suppress UnmarshalJSON
 type bigIntStr big.Int
 
-func (z *bigIntStr) UnmarshalJSON(data []byte) error {
-	var s string
-	if err := json.Unmarshal(data, &s); err != nil {
-		return err
-	}
-
-	return (*big.Int)(z).UnmarshalText([]byte(s))
+func (z *bigIntStr) UnmarshalText(data []byte) error {
+	return (*big.Int)(z).UnmarshalText(data)
 }
 
 // GetNetworkStats returns current network stats https://tezos.gitlab.io/betanet/api/rpc.html#get-network-stat
@@ -459,7 +454,7 @@ func (s *Service) GetNetworkPointLog(ctx context.Context, address string) ([]*Ne
 	return log, err
 }
 
-// MonitorNetworkPointLog monitorss network events related to an `IP:addr`.
+// MonitorNetworkPointLog monitors network events related to an `IP:addr`.
 // https://tezos.gitlab.io/mainnet/api/rpc.html#get-network-peers-peer-id-log
 func (s *Service) MonitorNetworkPointLog(ctx context.Context, address string, results chan<- []*NetworkPointLogEntry) error {
 	req, err := s.Client.NewRequest(ctx, http.MethodGet, "/network/points/"+address+"/log?monitor", nil)
@@ -541,4 +536,20 @@ func (s *Service) GetInvalidBlocks(ctx context.Context, chainID string) ([]*Inva
 	}
 
 	return invalidBlocks, nil
+}
+
+// GetBlock returns information about a Tezos block
+// https://tezos.gitlab.io/alphanet/api/rpc.html#get-block-id
+func (s *Service) GetBlock(ctx context.Context, chainID, blockID string) (*Block, error) {
+	req, err := s.Client.NewRequest(ctx, http.MethodGet, "/chains/"+chainID+"/blocks/"+blockID, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	var block Block
+	if err := s.Client.Do(req, &block); err != nil {
+		return nil, err
+	}
+
+	return &block, nil
 }
