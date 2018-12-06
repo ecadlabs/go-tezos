@@ -108,7 +108,22 @@ type Operation struct {
 	Signature string            `json:"signature"`
 }
 
-// OperationAlt is a heterogeneously encoded Operation
+/*
+OperationAlt is a heterogeneously encoded Operation with hash as a first array member, i.e.
+	[
+		"...", // hash
+		{
+			"protocol": "...",
+			...
+		}
+	]
+instead of
+	{
+		"protocol": "...",
+		"hash": "...",
+		...
+	}
+*/
 type OperationAlt Operation
 
 // UnmarshalJSON implements json.Unmarshaler
@@ -122,7 +137,8 @@ type OperationWithError struct {
 	Error Errors `json:"error"`
 }
 
-// OperationWithErrorAlt is a heterogeneously encoded OperationWithError
+// OperationWithErrorAlt is a heterogeneously encoded OperationWithError with hash as a first array member.
+// See OperationAlt for details
 type OperationWithErrorAlt OperationWithError
 
 // UnmarshalJSON implements json.Unmarshaler

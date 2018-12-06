@@ -286,7 +286,7 @@ func TestServiceGetMethods(t *testing.T) {
 			respFixture:     "fixtures/chains/invalid_blocks.json",
 			respContentType: "application/json",
 			expectedPath:    "/chains/main/invalid_blocks",
-			expectedValue:   []InvalidBlock{InvalidBlock{Block: "BM31cpbqfXu3WNYLQ8Tch21tXjcnwbyFzvcqohHL1BSnkhnhzwp", Level: 42, Error: []RPCError{}}},
+			expectedValue:   []*InvalidBlock{&InvalidBlock{Block: "BM31cpbqfXu3WNYLQ8Tch21tXjcnwbyFzvcqohHL1BSnkhnhzwp", Level: 42, Error: Errors{}}},
 		},
 		{
 			get: func(s *Service) (interface{}, error) {

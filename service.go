@@ -88,6 +88,8 @@ type NetworkPeer struct {
 	LastMiss                  *NetworkConnectionTimestamp `json:"last_miss"`
 }
 
+// networkPeerWithID is a heterogeneously encoded NetworkPeer with ID as a first array member
+// See OperationAlt for details
 type networkPeerWithID NetworkPeer
 
 func (n *networkPeerWithID) UnmarshalJSON(data []byte) error {
@@ -116,6 +118,8 @@ type NetworkPoint struct {
 	LastMiss                  time.Time         `json:"last_miss"`
 }
 
+// networkPointAlt is a heterogeneously encoded NetworkPoint with address as a first array member
+// See OperationAlt for details
 type networkPointAlt NetworkPoint
 
 func (n *networkPointAlt) UnmarshalJSON(data []byte) error {
@@ -152,6 +156,13 @@ type MempoolOperations struct {
 	BranchRefused []*OperationWithErrorAlt `json:"branch_refused"`
 	BranchDelayed []*OperationWithErrorAlt `json:"branch_delayed"`
 	Unprocessed   []*OperationAlt          `json:"unprocessed"`
+}
+
+// InvalidBlock represents invalid block hash along with the errors that led to it being declared invalid
+type InvalidBlock struct {
+	Block string `json:"block"`
+	Level int    `json:"level"`
+	Error Errors `json:"error"`
 }
 
 type bigIntStr big.Int
@@ -501,29 +512,6 @@ func (s *Service) GetBootstrapped(ctx context.Context, results chan<- *Bootstrap
 	return s.Client.Do(req, results)
 }
 
-type InvalidBlock struct {
-	Block string     `json:"block"`
-	Level int32      `json:"level"`
-	Error []RPCError `json:"error"`
-}
-
-// GetInvalidBlocks lists blocks that have been declared invalid along with the errors that led to them being declared invalid.
-// https://tezos.gitlab.io/alphanet/api/rpc.html#get-chains-chain-id-invalid-blocks
-func (s *Service) GetInvalidBlocks(ctx context.Context, chainID string) ([]InvalidBlock, error) {
-	u := "/chains/" + chainID + "/invalid_blocks"
-	req, err := s.Client.NewRequest(ctx, http.MethodGet, u, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	invalidBlocks := []InvalidBlock{}
-	if err := s.Client.Do(req, &invalidBlocks); err != nil {
-		return nil, err
-	}
-
-	return invalidBlocks, nil
-}
-
 // GetMempoolPendingOperations returns mempool pending operations
 func (s *Service) GetMempoolPendingOperations(ctx context.Context, chainID string) (*MempoolOperations, error) {
 	req, err := s.Client.NewRequest(ctx, http.MethodGet, "/chains/"+chainID+"/mempool/pending_operations", nil)
@@ -539,15 +527,30 @@ func (s *Service) GetMempoolPendingOperations(ctx context.Context, chainID strin
 	return &ops, nil
 }
 
-// GetBlock returns information about a Tezos block
-func (s *Service) GetBlock(ctx context.Context, chainID, blockID string) (*Block, error) {
-	u := "/chains/" + chainID + "/blocks/" + blockID
-	req, err := s.Client.NewRequest(ctx, http.MethodGet, u, nil)
+// GetInvalidBlocks lists blocks that have been declared invalid along with the errors that led to them being declared invalid.
+// https://tezos.gitlab.io/alphanet/api/rpc.html#get-chains-chain-id-invalid-blocks
+func (s *Service) GetInvalidBlocks(ctx context.Context, chainID string) ([]*InvalidBlock, error) {
+	req, err := s.Client.NewRequest(ctx, http.MethodGet, "/chains/"+chainID+"/invalid_blocks", nil)
 	if err != nil {
 		return nil, err
 	}
 
-	block := Block{}
+	var invalidBlocks []*InvalidBlock
+	if err := s.Client.Do(req, &invalidBlocks); err != nil {
+		return nil, err
+	}
+
+	return invalidBlocks, nil
+}
+
+// GetBlock returns information about a Tezos block
+func (s *Service) GetBlock(ctx context.Context, chainID, blockID string) (*Block, error) {
+	req, err := s.Client.NewRequest(ctx, http.MethodGet, "/chains/"+chainID+"/blocks/"+blockID, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	var block Block
 	if err := s.Client.Do(req, &block); err != nil {
 		return nil, err
 	}
