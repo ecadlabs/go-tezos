@@ -68,19 +68,79 @@ type EndorsementOperationElem struct {
 
 // EndorsementOperationMetadata represents an endorsement operation metadata
 type EndorsementOperationMetadata struct {
-	BalanceUpdates []*BalanceUpdate `json:"balance_updates"`
-	Delegate       string           `json:"delegate"`
-	Slots          []uint           `json:"slots"`
+	BalanceUpdates BalanceUpdates `json:"balance_updates"`
+	Delegate       string         `json:"delegate"`
+	Slots          []int          `json:"slots"`
 }
 
-// BalanceUpdate represents a balance update operation
-type BalanceUpdate struct {
-	Kind     string        `json:"kind"`
-	Category string        `json:"category"`
-	Delegate string        `json:"delegate"`
-	Level    int           `json:"level"`
-	Change   BalanceChange `json:"change"`
-	Contract string        `json:"contract"`
+// BalanceUpdate is a variable structure depending on the Kind field
+type BalanceUpdate interface {
+	BalanceUpdateKind() string
+}
+
+// GenericBalanceUpdate holds the common values among all BalanceUpdatesType variants
+type GenericBalanceUpdate struct {
+	Kind   string        `json:"kind"`
+	Change BalanceChange `json:"change"`
+}
+
+// BalanceUpdateKind returns the BalanceUpdateType's Kind field
+func (g *GenericBalanceUpdate) BalanceUpdateKind() string {
+	return g.Kind
+}
+
+// ContractBalanceUpdate is a BalanceUpdatesType variant for Kind=contract
+type ContractBalanceUpdate struct {
+	GenericBalanceUpdate
+	Contract string `json:"contract"`
+}
+
+// FreezerBalanceUpdate is a BalanceUpdatesType variant for Kind=freezer
+type FreezerBalanceUpdate struct {
+	GenericBalanceUpdate
+	Category string `json:"category"`
+	Delegate string `json:"delegate"`
+	Level    int    `json:"level"`
+}
+
+// BalanceUpdates is a list of balance update operations
+type BalanceUpdates []BalanceUpdate
+
+// UnmarshalJSON implements json.Unmarshaler
+func (b *BalanceUpdates) UnmarshalJSON(data []byte) error {
+	var raw []json.RawMessage
+
+	if err := json.Unmarshal(data, &raw); err != nil {
+		return err
+	}
+
+	*b = make(BalanceUpdates, len(raw))
+
+opLoop:
+	for i, r := range raw {
+		var tmp GenericBalanceUpdate
+		if err := json.Unmarshal(r, &tmp); err != nil {
+			return err
+		}
+
+		switch tmp.Kind {
+		case "contract":
+			(*b)[i] = &ContractBalanceUpdate{}
+
+		case "freezer":
+			(*b)[i] = &FreezerBalanceUpdate{}
+
+		default:
+			(*b)[i] = &tmp
+			continue opLoop
+		}
+
+		if err := json.Unmarshal(r, (*b)[i]); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 // BalanceChange is a string encoded int64
