@@ -171,6 +171,14 @@ func (z *bigIntStr) UnmarshalText(data []byte) error {
 	return (*big.Int)(z).UnmarshalText(data)
 }
 
+func (z *bigIntStr) MarshalJSON() ([]byte, error) {
+	return (*big.Int)(z).MarshalText()
+}
+
+func (z *bigIntStr) Int64() int64 {
+	return (*big.Int)(z).Int64()
+}
+
 // GetNetworkStats returns current network stats https://tezos.gitlab.io/betanet/api/rpc.html#get-network-stat
 func (s *Service) GetNetworkStats(ctx context.Context) (*NetworkStats, error) {
 	req, err := s.Client.NewRequest(ctx, http.MethodGet, "/network/stat", nil)
