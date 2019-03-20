@@ -43,6 +43,8 @@ opLoop:
 		switch tmp.Kind {
 		case "endorsement":
 			(*e)[i] = &EndorsementOperationElem{}
+		case "transaction":
+			(*e)[i] = &TransactionOperationElem{}
 
 		default:
 			(*e)[i] = &tmp
@@ -71,6 +73,20 @@ type EndorsementOperationMetadata struct {
 	BalanceUpdates BalanceUpdates `json:"balance_updates"`
 	Delegate       string         `json:"delegate"`
 	Slots          []int          `json:"slots"`
+}
+
+// TransactionOperationElem represents a transaction operation
+type TransactionOperationElem struct {
+	GenericOperationElem
+	Source       string                        `json:"source"`
+	Fee          bigIntStr                     `json:"fee"`
+	Counter      bigIntStr                     `json:"counter"`
+	GasLimit     bigIntStr                     `json:"gas_limit"`
+	StorageLimit bigIntStr                     `json:"storage_limit"`
+	Amount       bigIntStr                     `json:"amount"`
+	Destination  string                        `json:"destination"`
+	Parameters   map[string]interface{}        `json:"parameters"`
+	Metadata     *EndorsementOperationMetadata `json:"metadata"`
 }
 
 // BalanceUpdate is a variable structure depending on the Kind field
