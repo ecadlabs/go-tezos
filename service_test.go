@@ -297,6 +297,69 @@ func TestServiceGetMethods(t *testing.T) {
 			expectedPath:    "/chains/main/blocks/BLnoArJNPCyYFK2z3Mnomi36Jo3FwrjriJ6hvzgTJGYYDKEkDXm",
 			expectedValue:   &Block{Protocol: "PsYLVpVvgbLhAhoqAkMFUo6gudkJ9weNXhUYCiLDzcUpFpkk8Wt", ChainID: "NetXZUqeBjDnWde", Hash: "BLnoArJNPCyYFK2z3Mnomi36Jo3FwrjriJ6hvzgTJGYYDKEkDXm", Header: RawBlockHeader{Level: 219133, Proto: 1, Predecessor: "BLNWdEensT9MFq8pkDwjHfGVFsV1reYUhVcMAVzq3LCMS1WdKZ8", Timestamp: timeMustUnmarshalText("2018-11-27T17:49:57Z"), ValidationPass: 4, OperationsHash: "LLoZamNeucV8tqPAcqJQYsNEsMwnCuL1xu1kJMiGFCx9MBVCGcWJF", Fitness: []HexBytes{HexBytes{0x0}, HexBytes{0x0, 0x0, 0x0, 0x0, 0x0, 0x5a, 0x12, 0x5f}}, Context: "CoW5zHjWVHfUAbSgzqnZ938eDXG37P9oJVn3Lb3NyQJBheUDvdVf", ProofOfWorkNonce: HexBytes{0x7d, 0x94, 0x95, 0x82, 0xfe, 0x2, 0x48, 0x62}, Signature: "sigktdiZpdykWEjgeTB3N1qFJ5bsh3SxVNB8wc5FAutbJPG7puWQAPrxwL6BZPJVKLRj2uLnCw54Akx4KA48DS5Jg8tthCLY"}, Metadata: BlockHeaderMetadata{Protocol: "PsYLVpVvgbLhAhoqAkMFUo6gudkJ9weNXhUYCiLDzcUpFpkk8Wt", NextProtocol: "PsYLVpVvgbLhAhoqAkMFUo6gudkJ9weNXhUYCiLDzcUpFpkk8Wt", TestChainStatus: &NotRunningTestChainStatus{GenericTestChainStatus: GenericTestChainStatus{Status: "not_running"}}, MaxOperationsTTL: 60, MaxOperationDataLength: 16384, MaxBlockHeaderLength: 238, MaxOperationListLength: []*MaxOperationListLength{&MaxOperationListLength{MaxSize: 32768, MaxOp: 32}}, Baker: "tz3gN8NTLNLJg5KRsUU47NHNVHbdhcFXjjaB", Level: BlockHeaderMetadataLevel{Level: 219133, LevelPosition: 219132, Cycle: 106, CyclePosition: 2044, VotingPeriod: 6, VotingPeriodPosition: 22524, ExpectedCommitment: false}, VotingPeriodKind: "proposal", ConsumedGas: big.Int{}, Deactivated: []string{}, BalanceUpdates: BalanceUpdates{&ContractBalanceUpdate{GenericBalanceUpdate: GenericBalanceUpdate{Kind: "contract", Change: -512000000}, Contract: "tz3gN8NTLNLJg5KRsUU47NHNVHbdhcFXjjaB"}, &FreezerBalanceUpdate{GenericBalanceUpdate: GenericBalanceUpdate{Kind: "freezer", Change: 512000000}, Category: "deposits", Delegate: "tz3gN8NTLNLJg5KRsUU47NHNVHbdhcFXjjaB", Level: 106}}}, Operations: [][]*Operation{[]*Operation{&Operation{Protocol: "PsYLVpVvgbLhAhoqAkMFUo6gudkJ9weNXhUYCiLDzcUpFpkk8Wt", ChainID: "NetXZUqeBjDnWde", Hash: "opEatwYFvwuUM2aEa9cUU1ofMzsi46bYwiUhPLENXpLkjpps4Xq", Branch: "BLNWdEensT9MFq8pkDwjHfGVFsV1reYUhVcMAVzq3LCMS1WdKZ8", Contents: OperationElements{&EndorsementOperationElem{GenericOperationElem: GenericOperationElem{Kind: "endorsement"}, Level: 219132, Metadata: &EndorsementOperationMetadata{BalanceUpdates: BalanceUpdates{&ContractBalanceUpdate{GenericBalanceUpdate: GenericBalanceUpdate{Kind: "contract", Change: -128000000}, Contract: "tz1SfH1vxAt2TTZV7mpsN79uGas5LHhV8epq"}, &FreezerBalanceUpdate{GenericBalanceUpdate: GenericBalanceUpdate{Kind: "freezer", Change: 128000000}, Category: "deposits", Delegate: "tz1SfH1vxAt2TTZV7mpsN79uGas5LHhV8epq", Level: 106}, &FreezerBalanceUpdate{GenericBalanceUpdate: GenericBalanceUpdate{Kind: "freezer", Change: 2000000}, Category: "rewards", Delegate: "tz1SfH1vxAt2TTZV7mpsN79uGas5LHhV8epq", Level: 106}}, Delegate: "tz1SfH1vxAt2TTZV7mpsN79uGas5LHhV8epq", Slots: []int{18, 16}}}}, Signature: "sigS3d9wfEFuChEqLetCxf4G8QYAjWL7ND3F8amMPVPDS2RwQqkeKU9hbrEXk7GG7U2aPcWkTA3uTdNzz4gkAb8jSy8hUc51"}}, []*Operation{}, []*Operation{}, []*Operation{}}},
 		},
+		{
+			get: func(s *Service) (interface{}, error) {
+				return s.GetBallotList(ctx, "main", "head")
+			},
+			respFixture:     "fixtures/votes/ballot_list.json",
+			respContentType: "application/json",
+			expectedPath:    "/chains/main/blocks/head/votes/ballot_list",
+			expectedValue:   []*Ballot{&Ballot{Pkh: "tz3e75hU4EhDU3ukyJueh5v6UvEHzGwkg3yC", Ballot: "yay"}, &Ballot{Pkh: "tz1iEWcNL383qiDJ3Q3qt5W2T4aSKUbEU4An", Ballot: "nay"}, &Ballot{Pkh: "tz3bvNMQ95vfAYtG8193ymshqjSvmxiCUuR5", Ballot: "pass"}},
+		},
+		{
+			get: func(s *Service) (interface{}, error) {
+				return s.GetBallots(ctx, "main", "head")
+			},
+			respFixture:     "fixtures/votes/ballots.json",
+			respContentType: "application/json",
+			expectedPath:    "/chains/main/blocks/head/votes/ballots",
+			expectedValue:   &Ballots{Yay: 26776, Nay: 11, Pass: 19538},
+		},
+		{
+			get: func(s *Service) (interface{}, error) {
+				return s.GetBallotListings(ctx, "main", "head")
+			},
+			respFixture:     "fixtures/votes/listings.json",
+			respContentType: "application/json",
+			expectedPath:    "/chains/main/blocks/head/votes/listings",
+			expectedValue:   []*BallotListing{&BallotListing{Pkh: "tz1KfCukgwoU32Z4or88467mMM3in5smtv8k", Rolls: 5}, &BallotListing{Pkh: "tz1KfEsrtDaA1sX7vdM4qmEPWuSytuqCDp5j", Rolls: 307}},
+		},
+		{
+			get: func(s *Service) (interface{}, error) {
+				return s.GetProposals(ctx, "main", "head")
+			},
+			respFixture:     "fixtures/votes/proposals.json",
+			respContentType: "application/json",
+			expectedPath:    "/chains/main/blocks/head/votes/proposals",
+			expectedValue:   []*Proposal{&Proposal{ProposalHash: "Pt24m4xiPbLDhVgVfABUjirbmda3yohdN82Sp9FeuAXJ4eV9otd", SupporterCount: 11}},
+		},
+		{
+			get: func(s *Service) (interface{}, error) {
+				return s.GetCurrentProposals(ctx, "main", "head")
+			},
+			respFixture:     "fixtures/votes/current_proposal.json",
+			respContentType: "application/json",
+			expectedPath:    "/chains/main/blocks/head/votes/current_proposal",
+			expectedValue:   "Pt24m4xiPbLDhVgVfABUjirbmda3yohdN82Sp9FeuAXJ4eV9otd",
+		},
+		{
+			get: func(s *Service) (interface{}, error) {
+				return s.GetCurrentQuorum(ctx, "main", "head")
+			},
+			respFixture:     "fixtures/votes/current_quorum.json",
+			respContentType: "application/json",
+			expectedPath:    "/chains/main/blocks/head/votes/current_quorum",
+			expectedValue:   8000,
+		},
+		{
+			get: func(s *Service) (interface{}, error) {
+				return s.GetCurrentPeriodKind(ctx, "main", "head")
+			},
+			respFixture:     "fixtures/votes/current_period_kind.json",
+			respContentType: "application/json",
+			expectedPath:    "/chains/main/blocks/head/votes/current_period_kind",
+			expectedValue:   PeriodKind("testing_vote"),
+		},
 	}
 
 	for _, test := range tests {
