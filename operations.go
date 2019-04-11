@@ -45,6 +45,10 @@ opLoop:
 			(*e)[i] = &EndorsementOperationElem{}
 		case "transaction":
 			(*e)[i] = &TransactionOperationElem{}
+		case "ballot":
+			(*e)[i] = &BallotOperationElem{}
+		case "proposal":
+			(*e)[i] = &ProposalOperationElem{}
 
 		default:
 			(*e)[i] = &tmp
@@ -87,6 +91,25 @@ type TransactionOperationElem struct {
 	Destination  string                        `json:"destination"`
 	Parameters   map[string]interface{}        `json:"parameters"`
 	Metadata     *EndorsementOperationMetadata `json:"metadata"`
+}
+
+// BallotOperationElem represents a ballot operation
+type BallotOperationElem struct {
+	GenericOperationElem
+	Source   string                 `json:"source"`
+	Period   int                    `json:"period"`
+	Proposal string                 `json:"proposal"`
+	Metadata map[string]interface{} `json:"metadata"`
+	Ballot   string                 `json:"ballot"`
+}
+
+// ProposalOperationElem represents a proposal operation
+type ProposalOperationElem struct {
+	GenericOperationElem
+	Source   string                 `json:"source"`
+	Period   int                    `json:"period"`
+	Proposal string                 `json:"proposal"`
+	Metadata map[string]interface{} `json:"metadata"`
 }
 
 // BalanceUpdate is a variable structure depending on the Kind field
@@ -220,4 +243,48 @@ type OperationWithErrorAlt OperationWithError
 // UnmarshalJSON implements json.Unmarshaler
 func (o *OperationWithErrorAlt) UnmarshalJSON(data []byte) error {
 	return unmarshalHeterogeneousJSONArray(data, &o.Hash, (*OperationWithError)(o))
+}
+
+// FilterBallotOps filter all BallotOperationElem from a slice of OperationElem
+func FilterBallotOps(ops []OperationElem) []*BallotOperationElem {
+	bOps := []*BallotOperationElem{}
+	for _, op := range ops {
+		if bOp, ok := op.(*BallotOperationElem); ok {
+			bOps = append(bOps, bOp)
+		}
+	}
+	return bOps
+}
+
+// FilterProposalOps filter all ProposalOperationElem from a slice of OperationElem
+func FilterProposalOps(ops []OperationElem) []*ProposalOperationElem {
+	pOps := []*ProposalOperationElem{}
+	for _, op := range ops {
+		if pOp, ok := op.(*ProposalOperationElem); ok {
+			pOps = append(pOps, pOp)
+		}
+	}
+	return pOps
+}
+
+// FilterTransactionOps filter all TransactionOperationElem from a slice of OperationElem
+func FilterTransactionOps(ops []OperationElem) []*TransactionOperationElem {
+	tOps := []*TransactionOperationElem{}
+	for _, op := range ops {
+		if tOp, ok := op.(*TransactionOperationElem); ok {
+			tOps = append(tOps, tOp)
+		}
+	}
+	return tOps
+}
+
+// FilterEndorsmentOps filter all EndorsementOperationElem from a slice of OperationElem
+func FilterEndorsmentOps(ops []OperationElem) []*EndorsementOperationElem {
+	eOps := []*EndorsementOperationElem{}
+	for _, op := range ops {
+		if eOp, ok := op.(*EndorsementOperationElem); ok {
+			eOps = append(eOps, eOp)
+		}
+	}
+	return eOps
 }
