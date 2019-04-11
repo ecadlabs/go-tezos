@@ -6,7 +6,7 @@ RPC methods.
 [![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/2349/badge)](https://bestpractices.coreinfrastructure.org/projects/2349)
 [![CircleCI](https://circleci.com/gh/ecadlabs/go-tezos/tree/master.svg?style=svg)](https://circleci.com/gh/ecadlabs/go-tezos/tree/master)
 [![Maintainability](https://api.codeclimate.com/v1/badges/b4e610a400c496532cd3/maintainability)](https://codeclimate.com/github/ecadlabs/go-tezos/maintainability)
-[![Test Coverage](https://api.codeclimate.com/v1/badges/a99a88d28ad37a79dbf6/test_coverage)](https://codeclimate.com/github/codeclimate/codeclimate/test_coverage)
+[![Test Coverage](https://api.codeclimate.com/v1/badges/b4e610a400c496532cd3/test_coverage)](https://codeclimate.com/github/ecadlabs/go-tezos/test_coverage)
 
 
 ## Work in progress, contributions welcome.
