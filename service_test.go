@@ -304,7 +304,7 @@ func TestServiceGetMethods(t *testing.T) {
 			respFixture:     "fixtures/votes/ballot_list.json",
 			respContentType: "application/json",
 			expectedPath:    "/chains/main/blocks/head/votes/ballot_list",
-			expectedValue:   []*Ballot{&Ballot{Pkh: "tz3e75hU4EhDU3ukyJueh5v6UvEHzGwkg3yC", Ballot: "yay"}, &Ballot{Pkh: "tz1iEWcNL383qiDJ3Q3qt5W2T4aSKUbEU4An", Ballot: "nay"}, &Ballot{Pkh: "tz3bvNMQ95vfAYtG8193ymshqjSvmxiCUuR5", Ballot: "pass"}},
+			expectedValue:   []*Ballot{&Ballot{PKH: "tz3e75hU4EhDU3ukyJueh5v6UvEHzGwkg3yC", Ballot: "yay"}, &Ballot{PKH: "tz1iEWcNL383qiDJ3Q3qt5W2T4aSKUbEU4An", Ballot: "nay"}, &Ballot{PKH: "tz3bvNMQ95vfAYtG8193ymshqjSvmxiCUuR5", Ballot: "pass"}},
 		},
 		{
 			get: func(s *Service) (interface{}, error) {
@@ -322,7 +322,7 @@ func TestServiceGetMethods(t *testing.T) {
 			respFixture:     "fixtures/votes/listings.json",
 			respContentType: "application/json",
 			expectedPath:    "/chains/main/blocks/head/votes/listings",
-			expectedValue:   []*BallotListing{&BallotListing{Pkh: "tz1KfCukgwoU32Z4or88467mMM3in5smtv8k", Rolls: 5}, &BallotListing{Pkh: "tz1KfEsrtDaA1sX7vdM4qmEPWuSytuqCDp5j", Rolls: 307}},
+			expectedValue:   []*BallotListing{&BallotListing{PKH: "tz1KfCukgwoU32Z4or88467mMM3in5smtv8k", Rolls: 5}, &BallotListing{PKH: "tz1KfEsrtDaA1sX7vdM4qmEPWuSytuqCDp5j", Rolls: 307}},
 		},
 		{
 			get: func(s *Service) (interface{}, error) {
