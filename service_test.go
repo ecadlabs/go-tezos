@@ -297,6 +297,27 @@ func TestServiceGetMethods(t *testing.T) {
 			expectedPath:    "/chains/main/blocks/BLnoArJNPCyYFK2z3Mnomi36Jo3FwrjriJ6hvzgTJGYYDKEkDXm",
 			expectedValue:   &Block{Protocol: "PsYLVpVvgbLhAhoqAkMFUo6gudkJ9weNXhUYCiLDzcUpFpkk8Wt", ChainID: "NetXZUqeBjDnWde", Hash: "BLnoArJNPCyYFK2z3Mnomi36Jo3FwrjriJ6hvzgTJGYYDKEkDXm", Header: RawBlockHeader{Level: 219133, Proto: 1, Predecessor: "BLNWdEensT9MFq8pkDwjHfGVFsV1reYUhVcMAVzq3LCMS1WdKZ8", Timestamp: timeMustUnmarshalText("2018-11-27T17:49:57Z"), ValidationPass: 4, OperationsHash: "LLoZamNeucV8tqPAcqJQYsNEsMwnCuL1xu1kJMiGFCx9MBVCGcWJF", Fitness: []HexBytes{HexBytes{0x0}, HexBytes{0x0, 0x0, 0x0, 0x0, 0x0, 0x5a, 0x12, 0x5f}}, Context: "CoW5zHjWVHfUAbSgzqnZ938eDXG37P9oJVn3Lb3NyQJBheUDvdVf", ProofOfWorkNonce: HexBytes{0x7d, 0x94, 0x95, 0x82, 0xfe, 0x2, 0x48, 0x62}, Signature: "sigktdiZpdykWEjgeTB3N1qFJ5bsh3SxVNB8wc5FAutbJPG7puWQAPrxwL6BZPJVKLRj2uLnCw54Akx4KA48DS5Jg8tthCLY"}, Metadata: BlockHeaderMetadata{Protocol: "PsYLVpVvgbLhAhoqAkMFUo6gudkJ9weNXhUYCiLDzcUpFpkk8Wt", NextProtocol: "PsYLVpVvgbLhAhoqAkMFUo6gudkJ9weNXhUYCiLDzcUpFpkk8Wt", TestChainStatus: &NotRunningTestChainStatus{GenericTestChainStatus: GenericTestChainStatus{Status: "not_running"}}, MaxOperationsTTL: 60, MaxOperationDataLength: 16384, MaxBlockHeaderLength: 238, MaxOperationListLength: []*MaxOperationListLength{&MaxOperationListLength{MaxSize: 32768, MaxOp: 32}}, Baker: "tz3gN8NTLNLJg5KRsUU47NHNVHbdhcFXjjaB", Level: BlockHeaderMetadataLevel{Level: 219133, LevelPosition: 219132, Cycle: 106, CyclePosition: 2044, VotingPeriod: 6, VotingPeriodPosition: 22524, ExpectedCommitment: false}, VotingPeriodKind: "proposal", ConsumedGas: big.Int{}, Deactivated: []string{}, BalanceUpdates: BalanceUpdates{&ContractBalanceUpdate{GenericBalanceUpdate: GenericBalanceUpdate{Kind: "contract", Change: -512000000}, Contract: "tz3gN8NTLNLJg5KRsUU47NHNVHbdhcFXjjaB"}, &FreezerBalanceUpdate{GenericBalanceUpdate: GenericBalanceUpdate{Kind: "freezer", Change: 512000000}, Category: "deposits", Delegate: "tz3gN8NTLNLJg5KRsUU47NHNVHbdhcFXjjaB", Level: 106}}}, Operations: [][]*Operation{[]*Operation{&Operation{Protocol: "PsYLVpVvgbLhAhoqAkMFUo6gudkJ9weNXhUYCiLDzcUpFpkk8Wt", ChainID: "NetXZUqeBjDnWde", Hash: "opEatwYFvwuUM2aEa9cUU1ofMzsi46bYwiUhPLENXpLkjpps4Xq", Branch: "BLNWdEensT9MFq8pkDwjHfGVFsV1reYUhVcMAVzq3LCMS1WdKZ8", Contents: OperationElements{&EndorsementOperationElem{GenericOperationElem: GenericOperationElem{Kind: "endorsement"}, Level: 219132, Metadata: &EndorsementOperationMetadata{BalanceUpdates: BalanceUpdates{&ContractBalanceUpdate{GenericBalanceUpdate: GenericBalanceUpdate{Kind: "contract", Change: -128000000}, Contract: "tz1SfH1vxAt2TTZV7mpsN79uGas5LHhV8epq"}, &FreezerBalanceUpdate{GenericBalanceUpdate: GenericBalanceUpdate{Kind: "freezer", Change: 128000000}, Category: "deposits", Delegate: "tz1SfH1vxAt2TTZV7mpsN79uGas5LHhV8epq", Level: 106}, &FreezerBalanceUpdate{GenericBalanceUpdate: GenericBalanceUpdate{Kind: "freezer", Change: 2000000}, Category: "rewards", Delegate: "tz1SfH1vxAt2TTZV7mpsN79uGas5LHhV8epq", Level: 106}}, Delegate: "tz1SfH1vxAt2TTZV7mpsN79uGas5LHhV8epq", Slots: []int{18, 16}}}}, Signature: "sigS3d9wfEFuChEqLetCxf4G8QYAjWL7ND3F8amMPVPDS2RwQqkeKU9hbrEXk7GG7U2aPcWkTA3uTdNzz4gkAb8jSy8hUc51"}}, []*Operation{}, []*Operation{}, []*Operation{}}},
 		},
+		{
+			get: func(s *Service) (interface{}, error) {
+				ch := make(chan *MonitorBlock, 100)
+				if err := s.GetMonitorHeads(ctx, "main", ch); err != nil {
+					return nil, err
+				}
+				close(ch)
+
+				var res []*MonitorBlock
+				for b := range ch {
+					res = append(res, b)
+				}
+				return res, nil
+			},
+			respFixture:     "fixtures/monitor/heads.chunked",
+			respContentType: "application/json",
+			expectedPath:    "/monitor/heads/main",
+			expectedValue: []*MonitorBlock{
+				&MonitorBlock{Hash: "BKq199p1Hm1phfJ4DhuRjB6yBSJnDNG8sgMSnja9pXR96T2Hyy1", Timestamp: timeMustUnmarshalText("2019-04-10T22:37:08Z"), OperationsHash: "LLobC6LA4T2STTa3D77YDuDsrw6xEY8DakpkvR9kd7DL9HpvchUtb", Level: 390397, Context: "CoUiJrzomxKms5eELzgpULo2iyf7dJAqW3gEBnFE7WHv3cy9pfVE", Predecessor: "BKihh4Bd3nAypX5bZtYy7xoxQDRbygkoyjB9w171exm2mbXHQWj", Proto: 3, ProtocolData: "000000000003bcf5f72d00320dffeb51c154077ce7dd2af6057f0370485a738345d3cb5c722db6df6ddb9b48c4e7a4282a3b994bca1cc52f6b95c889f23906e1d4e3e20203e171ff924004", ValidationPass: 4, Fitness: []HexBytes{HexBytes{0x0}, HexBytes{0x0, 0x0, 0x0, 0x0, 0x0, 0x5a, 0x12, 0x5f}}},
+			},
+		},
 	}
 
 	for _, test := range tests {
