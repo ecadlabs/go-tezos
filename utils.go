@@ -3,7 +3,6 @@ package tezos
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 )
 
 /*
@@ -54,12 +53,4 @@ func unmarshalInSlice(data []byte, s []interface{}) error {
 		}
 	}
 	return nil
-}
-
-func jsonifyWhatever(i interface{}) string {
-	jsonb, err := json.Marshal(i)
-	if err != nil {
-		log.Panic(err)
-	}
-	return string(jsonb)
 }
