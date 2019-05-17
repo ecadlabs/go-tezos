@@ -318,6 +318,69 @@ func TestServiceGetMethods(t *testing.T) {
 				&MonitorBlock{Hash: "BKq199p1Hm1phfJ4DhuRjB6yBSJnDNG8sgMSnja9pXR96T2Hyy1", Timestamp: timeMustUnmarshalText("2019-04-10T22:37:08Z"), OperationsHash: "LLobC6LA4T2STTa3D77YDuDsrw6xEY8DakpkvR9kd7DL9HpvchUtb", Level: 390397, Context: "CoUiJrzomxKms5eELzgpULo2iyf7dJAqW3gEBnFE7WHv3cy9pfVE", Predecessor: "BKihh4Bd3nAypX5bZtYy7xoxQDRbygkoyjB9w171exm2mbXHQWj", Proto: 3, ProtocolData: "000000000003bcf5f72d00320dffeb51c154077ce7dd2af6057f0370485a738345d3cb5c722db6df6ddb9b48c4e7a4282a3b994bca1cc52f6b95c889f23906e1d4e3e20203e171ff924004", ValidationPass: 4, Fitness: []HexBytes{HexBytes{0x0}, HexBytes{0x0, 0x0, 0x0, 0x0, 0x0, 0x5a, 0x12, 0x5f}}},
 			},
 		},
+		{
+			get: func(s *Service) (interface{}, error) {
+				return s.GetBallotList(ctx, "main", "head")
+			},
+			respFixture:     "fixtures/votes/ballot_list.json",
+			respContentType: "application/json",
+			expectedPath:    "/chains/main/blocks/head/votes/ballot_list",
+			expectedValue:   []*Ballot{&Ballot{PKH: "tz3e75hU4EhDU3ukyJueh5v6UvEHzGwkg3yC", Ballot: "yay"}, &Ballot{PKH: "tz1iEWcNL383qiDJ3Q3qt5W2T4aSKUbEU4An", Ballot: "nay"}, &Ballot{PKH: "tz3bvNMQ95vfAYtG8193ymshqjSvmxiCUuR5", Ballot: "pass"}},
+		},
+		{
+			get: func(s *Service) (interface{}, error) {
+				return s.GetBallots(ctx, "main", "head")
+			},
+			respFixture:     "fixtures/votes/ballots.json",
+			respContentType: "application/json",
+			expectedPath:    "/chains/main/blocks/head/votes/ballots",
+			expectedValue:   &Ballots{Yay: 26776, Nay: 11, Pass: 19538},
+		},
+		{
+			get: func(s *Service) (interface{}, error) {
+				return s.GetBallotListings(ctx, "main", "head")
+			},
+			respFixture:     "fixtures/votes/listings.json",
+			respContentType: "application/json",
+			expectedPath:    "/chains/main/blocks/head/votes/listings",
+			expectedValue:   []*BallotListing{&BallotListing{PKH: "tz1KfCukgwoU32Z4or88467mMM3in5smtv8k", Rolls: 5}, &BallotListing{PKH: "tz1KfEsrtDaA1sX7vdM4qmEPWuSytuqCDp5j", Rolls: 307}},
+		},
+		{
+			get: func(s *Service) (interface{}, error) {
+				return s.GetProposals(ctx, "main", "head")
+			},
+			respFixture:     "fixtures/votes/proposals.json",
+			respContentType: "application/json",
+			expectedPath:    "/chains/main/blocks/head/votes/proposals",
+			expectedValue:   []*Proposal{&Proposal{ProposalHash: "Pt24m4xiPbLDhVgVfABUjirbmda3yohdN82Sp9FeuAXJ4eV9otd", SupporterCount: 11}},
+		},
+		{
+			get: func(s *Service) (interface{}, error) {
+				return s.GetCurrentProposals(ctx, "main", "head")
+			},
+			respFixture:     "fixtures/votes/current_proposal.json",
+			respContentType: "application/json",
+			expectedPath:    "/chains/main/blocks/head/votes/current_proposal",
+			expectedValue:   "Pt24m4xiPbLDhVgVfABUjirbmda3yohdN82Sp9FeuAXJ4eV9otd",
+		},
+		{
+			get: func(s *Service) (interface{}, error) {
+				return s.GetCurrentQuorum(ctx, "main", "head")
+			},
+			respFixture:     "fixtures/votes/current_quorum.json",
+			respContentType: "application/json",
+			expectedPath:    "/chains/main/blocks/head/votes/current_quorum",
+			expectedValue:   8000,
+		},
+		{
+			get: func(s *Service) (interface{}, error) {
+				return s.GetCurrentPeriodKind(ctx, "main", "head")
+			},
+			respFixture:     "fixtures/votes/current_period_kind.json",
+			respContentType: "application/json",
+			expectedPath:    "/chains/main/blocks/head/votes/current_period_kind",
+			expectedValue:   PeriodKind("testing_vote"),
+		},
 	}
 
 	for _, test := range tests {
