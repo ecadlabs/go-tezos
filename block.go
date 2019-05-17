@@ -21,6 +21,21 @@ func (hb *HexBytes) UnmarshalText(data []byte) error {
 	return nil
 }
 
+// MonitorBlock holds information about block returned by monitor heads endpoint
+type MonitorBlock struct {
+	Level          int        `json:"level"`
+	Proto          int        `json:"proto"`
+	Predecessor    string     `json:"predecessor"`
+	Timestamp      time.Time  `json:"timestamp"`
+	ValidationPass int        `json:"validation_pass"`
+	OperationsHash string     `json:"operations_hash"`
+	Fitness        []HexBytes `json:"fitness"`
+	Context        string     `json:"context"`
+	Priority       int        `json:"priority"`
+	Hash           string     `json:"hash"`
+	ProtocolData   string     `json:"protocol_data"`
+}
+
 // RawBlockHeader is a part of the Tezos block data
 type RawBlockHeader struct {
 	Level            int        `json:"level"`

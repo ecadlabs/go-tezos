@@ -517,6 +517,16 @@ func (s *Service) GetBootstrapped(ctx context.Context, results chan<- *Bootstrap
 	return s.Client.Do(req, results)
 }
 
+// GetMonitorHeads reads from the heads blocks stream https://tezos.gitlab.io/mainnet/api/rpc.html#get-monitor-heads-chain-id
+func (s *Service) GetMonitorHeads(ctx context.Context, chainID string, results chan<- *MonitorBlock) error {
+	req, err := s.Client.NewRequest(ctx, http.MethodGet, "/monitor/heads/"+chainID, nil)
+	if err != nil {
+		return err
+	}
+
+	return s.Client.Do(req, results)
+}
+
 // GetMempoolPendingOperations returns mempool pending operations
 func (s *Service) GetMempoolPendingOperations(ctx context.Context, chainID string) (*MempoolOperations, error) {
 	req, err := s.Client.NewRequest(ctx, http.MethodGet, "/chains/"+chainID+"/mempool/pending_operations", nil)

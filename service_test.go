@@ -299,6 +299,27 @@ func TestServiceGetMethods(t *testing.T) {
 		},
 		{
 			get: func(s *Service) (interface{}, error) {
+				ch := make(chan *MonitorBlock, 100)
+				if err := s.GetMonitorHeads(ctx, "main", ch); err != nil {
+					return nil, err
+				}
+				close(ch)
+
+				var res []*MonitorBlock
+				for b := range ch {
+					res = append(res, b)
+				}
+				return res, nil
+			},
+			respFixture:     "fixtures/monitor/heads.chunked",
+			respContentType: "application/json",
+			expectedPath:    "/monitor/heads/main",
+			expectedValue: []*MonitorBlock{
+				&MonitorBlock{Hash: "BKq199p1Hm1phfJ4DhuRjB6yBSJnDNG8sgMSnja9pXR96T2Hyy1", Timestamp: timeMustUnmarshalText("2019-04-10T22:37:08Z"), OperationsHash: "LLobC6LA4T2STTa3D77YDuDsrw6xEY8DakpkvR9kd7DL9HpvchUtb", Level: 390397, Context: "CoUiJrzomxKms5eELzgpULo2iyf7dJAqW3gEBnFE7WHv3cy9pfVE", Predecessor: "BKihh4Bd3nAypX5bZtYy7xoxQDRbygkoyjB9w171exm2mbXHQWj", Proto: 3, ProtocolData: "000000000003bcf5f72d00320dffeb51c154077ce7dd2af6057f0370485a738345d3cb5c722db6df6ddb9b48c4e7a4282a3b994bca1cc52f6b95c889f23906e1d4e3e20203e171ff924004", ValidationPass: 4, Fitness: []HexBytes{HexBytes{0x0}, HexBytes{0x0, 0x0, 0x0, 0x0, 0x0, 0x5a, 0x12, 0x5f}}},
+			},
+		},
+		{
+			get: func(s *Service) (interface{}, error) {
 				return s.GetBallotList(ctx, "main", "head")
 			},
 			respFixture:     "fixtures/votes/ballot_list.json",
