@@ -47,7 +47,7 @@ opLoop:
 			(*e)[i] = &TransactionOperationElem{}
 		case "ballot":
 			(*e)[i] = &BallotOperationElem{}
-		case "proposal":
+		case "proposals":
 			(*e)[i] = &ProposalOperationElem{}
 
 		default:
@@ -106,10 +106,10 @@ type BallotOperationElem struct {
 // ProposalOperationElem represents a proposal operation
 type ProposalOperationElem struct {
 	GenericOperationElem
-	Source   string                 `json:"source"`
-	Period   int                    `json:"period"`
-	Proposal string                 `json:"proposal"`
-	Metadata map[string]interface{} `json:"metadata"`
+	Source    string                 `json:"source"`
+	Period    int                    `json:"period"`
+	Proposals []string               `json:"proposals"`
+	Metadata  map[string]interface{} `json:"metadata"`
 }
 
 // BalanceUpdate is a variable structure depending on the Kind field
