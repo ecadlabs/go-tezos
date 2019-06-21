@@ -543,7 +543,7 @@ func (s *Service) GetMempoolPendingOperations(ctx context.Context, chainID strin
 }
 
 // MonitorMempoolOperations monitors mempool pending operations.
-// The connection is getting closed after every new block.
+// The connection is closed after every new block.
 func (s *Service) MonitorMempoolOperations(ctx context.Context, chainID, filter string, results chan<- []*Operation) error {
 	if filter == "" {
 		filter = "applied"
