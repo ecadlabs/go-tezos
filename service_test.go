@@ -320,6 +320,25 @@ func TestServiceGetMethods(t *testing.T) {
 		},
 		{
 			get: func(s *Service) (interface{}, error) {
+				ch := make(chan []*Operation, 100)
+				if err := s.MonitorMempoolOperations(ctx, "main", "", ch); err != nil {
+					return nil, err
+				}
+				close(ch)
+
+				var res []*Operation
+				for b := range ch {
+					res = append(res, b...)
+				}
+				return res, nil
+			},
+			respFixture:     "fixtures/monitor/mempool_operations.chunked",
+			respContentType: "application/json",
+			expectedPath:    "/chains/main/mempool/monitor_operations",
+			expectedValue:   []*Operation{&Operation{Protocol: "Pt24m4xiPbLDhVgVfABUjirbmda3yohdN82Sp9FeuAXJ4eV9otd", Branch: "BKvSZMWpcDc9RkKg11sQ5oRDyHrMDiKX5RmTdU455XnPHuYZWRS", Contents: OperationElements{&EndorsementOperationElem{GenericOperationElem: GenericOperationElem{Kind: "endorsement"}, Level: 489922}}, Signature: "sigbdfHsA4XHTB3ToUMzRRAYmSJBCvJ52jdE7SrFp7BD3jUnd9sVBdzytHKTD6ygy343jRjJvc4E8kuZRiEqUdExH333RaqP"}, &Operation{Protocol: "Pt24m4xiPbLDhVgVfABUjirbmda3yohdN82Sp9FeuAXJ4eV9otd", Branch: "BKvSZMWpcDc9RkKg11sQ5oRDyHrMDiKX5RmTdU455XnPHuYZWRS", Contents: OperationElements{&EndorsementOperationElem{GenericOperationElem: GenericOperationElem{Kind: "endorsement"}, Level: 489922}}, Signature: "sigk5ep31BR1gSFSD37aiiAbT2azciyBdBaZD8Xp4Ef1NCT37L9ggucZySHhrNEnmqKZSRq5LKq5MJDVhj4tKmP1z8GqmY5j"}},
+		},
+		{
+			get: func(s *Service) (interface{}, error) {
 				return s.GetBallotList(ctx, "main", "head")
 			},
 			respFixture:     "fixtures/votes/ballot_list.json",
