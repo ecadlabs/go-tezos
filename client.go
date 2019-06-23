@@ -56,7 +56,7 @@ func (c *RPCClient) NewRequest(ctx context.Context, method, urlStr string, body 
 // RPCClient manages communication with a Tezos RPC server.
 type RPCClient struct {
 	// HTTP client used to communicate with the Tezos node API.
-	client *http.Client
+	Client *http.Client
 	// Base URL for API requests.
 	BaseURL *url.URL
 	// User agent name for client.
@@ -76,7 +76,7 @@ func NewRPCClient(httpClient *http.Client, baseURL string) (*RPCClient, error) {
 	}
 
 	c := &RPCClient{
-		client:    httpClient,
+		Client:    httpClient,
 		BaseURL:   u,
 		UserAgent: userAgent,
 	}
@@ -132,7 +132,7 @@ func (c *RPCClient) handleNormalResponse(ctx context.Context, resp *http.Respons
 func (c *RPCClient) Do(req *http.Request, v interface{}) (err error) {
 	timestamp := time.Now()
 
-	resp, err := c.client.Do(req)
+	resp, err := c.Client.Do(req)
 
 	if c.RPCStatusCallback != nil {
 		defer func() {
