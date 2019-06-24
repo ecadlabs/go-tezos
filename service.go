@@ -542,6 +542,21 @@ func (s *Service) GetMempoolPendingOperations(ctx context.Context, chainID strin
 	return &ops, nil
 }
 
+// MonitorMempoolOperations monitors mempool pending operations.
+// The connection is closed after every new block.
+func (s *Service) MonitorMempoolOperations(ctx context.Context, chainID, filter string, results chan<- []*Operation) error {
+	if filter == "" {
+		filter = "applied"
+	}
+
+	req, err := s.Client.NewRequest(ctx, http.MethodGet, "/chains/"+chainID+"/mempool/monitor_operations?"+filter, nil)
+	if err != nil {
+		return err
+	}
+
+	return s.Client.Do(req, results)
+}
+
 // GetInvalidBlocks lists blocks that have been declared invalid along with the errors that led to them being declared invalid.
 // https://tezos.gitlab.io/alphanet/api/rpc.html#get-chains-chain-id-invalid-blocks
 func (s *Service) GetInvalidBlocks(ctx context.Context, chainID string) ([]*InvalidBlock, error) {

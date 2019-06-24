@@ -11,6 +11,7 @@ import (
 	"net/url"
 	"reflect"
 	"strings"
+	"time"
 )
 
 const (
@@ -55,11 +56,15 @@ func (c *RPCClient) NewRequest(ctx context.Context, method, urlStr string, body 
 // RPCClient manages communication with a Tezos RPC server.
 type RPCClient struct {
 	// HTTP client used to communicate with the Tezos node API.
-	client *http.Client
+	Client *http.Client
 	// Base URL for API requests.
 	BaseURL *url.URL
 	// User agent name for client.
 	UserAgent string
+	// Optional callback for metrics.
+	RPCStatusCallback func(req *http.Request, status int, duration time.Duration, err error)
+	// Optional callback for metrics.
+	RPCHeaderCallback func(req *http.Request, resp *http.Response, duration time.Duration)
 }
 
 // NewRPCClient returns a new Tezos RPC client.
@@ -72,7 +77,11 @@ func NewRPCClient(httpClient *http.Client, baseURL string) (*RPCClient, error) {
 		return nil, err
 	}
 
-	c := &RPCClient{client: httpClient, BaseURL: u, UserAgent: userAgent}
+	c := &RPCClient{
+		Client:    httpClient,
+		BaseURL:   u,
+		UserAgent: userAgent,
+	}
 	return c, nil
 }
 
@@ -123,7 +132,21 @@ func (c *RPCClient) handleNormalResponse(ctx context.Context, resp *http.Respons
 
 // Do retrieves values from the API and marshals them into the provided interface.
 func (c *RPCClient) Do(req *http.Request, v interface{}) (err error) {
-	resp, err := c.client.Do(req)
+	timestamp := time.Now()
+
+	resp, err := c.Client.Do(req)
+	if c.RPCHeaderCallback != nil {
+		duration := time.Since(timestamp)
+		c.RPCHeaderCallback(req, resp, duration)
+	}
+
+	if c.RPCStatusCallback != nil {
+		defer func() {
+			duration := time.Since(timestamp)
+			c.RPCStatusCallback(req, resp.StatusCode, duration, err)
+		}()
+	}
+
 	if err != nil {
 		return err
 	}
