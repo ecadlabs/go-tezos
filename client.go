@@ -135,6 +135,10 @@ func (c *RPCClient) Do(req *http.Request, v interface{}) (err error) {
 	timestamp := time.Now()
 
 	resp, err := c.Client.Do(req)
+	if err != nil {
+		return err
+	}
+
 	if c.RPCHeaderCallback != nil {
 		duration := time.Since(timestamp)
 		c.RPCHeaderCallback(req, resp, duration)
@@ -145,10 +149,6 @@ func (c *RPCClient) Do(req *http.Request, v interface{}) (err error) {
 			duration := time.Since(timestamp)
 			c.RPCStatusCallback(req, resp.StatusCode, duration, err)
 		}()
-	}
-
-	if err != nil {
-		return err
 	}
 
 	defer func() {
