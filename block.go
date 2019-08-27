@@ -4,7 +4,6 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"math/big"
 	"time"
 )
 
@@ -118,7 +117,7 @@ type BlockHeaderMetadata struct {
 	Level                  BlockHeaderMetadataLevel  `json:"level"`
 	VotingPeriodKind       string                    `json:"voting_period_kind"`
 	NonceHash              string                    `json:"nonce_hash"`
-	ConsumedGas            big.Int                   `json:"-"`
+	ConsumedGas            BigInt                    `json:"consumed_gas"`
 	Deactivated            []string                  `json:"deactivated"`
 	BalanceUpdates         BalanceUpdates            `json:"balance_updates"`
 }
@@ -159,7 +158,6 @@ func (bhm *BlockHeaderMetadata) UnmarshalJSON(data []byte) error {
 
 	var tmp struct {
 		TestChainStatus json.RawMessage `json:"test_chain_status"`
-		ConsumedGas     bigIntStr       `json:"consumed_gas"`
 	}
 
 	if err := json.Unmarshal(data, &tmp); err != nil {
@@ -172,7 +170,6 @@ func (bhm *BlockHeaderMetadata) UnmarshalJSON(data []byte) error {
 	}
 
 	bhm.TestChainStatus = tcs
-	bhm.ConsumedGas = big.Int(tmp.ConsumedGas)
 
 	return nil
 }

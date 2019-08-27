@@ -2,7 +2,6 @@ package tezos
 
 import (
 	"encoding/json"
-	"strconv"
 )
 
 // OperationElem must be implemented by all operation elements
@@ -83,11 +82,11 @@ type EndorsementOperationMetadata struct {
 type TransactionOperationElem struct {
 	GenericOperationElem
 	Source       string                        `json:"source"`
-	Fee          bigIntStr                     `json:"fee"`
-	Counter      bigIntStr                     `json:"counter"`
-	GasLimit     bigIntStr                     `json:"gas_limit"`
-	StorageLimit bigIntStr                     `json:"storage_limit"`
-	Amount       bigIntStr                     `json:"amount"`
+	Fee          BigInt                        `json:"fee"`
+	Counter      BigInt                        `json:"counter"`
+	GasLimit     BigInt                        `json:"gas_limit"`
+	StorageLimit BigInt                        `json:"storage_limit"`
+	Amount       BigInt                        `json:"amount"`
 	Destination  string                        `json:"destination"`
 	Parameters   map[string]interface{}        `json:"parameters"`
 	Metadata     *EndorsementOperationMetadata `json:"metadata"`
@@ -119,8 +118,8 @@ type BalanceUpdate interface {
 
 // GenericBalanceUpdate holds the common values among all BalanceUpdatesType variants
 type GenericBalanceUpdate struct {
-	Kind   string        `json:"kind"`
-	Change BalanceChange `json:"change"`
+	Kind   string `json:"kind"`
+	Change int64  `json:"change,string"`
 }
 
 // BalanceUpdateKind returns the BalanceUpdateType's Kind field
@@ -180,21 +179,6 @@ opLoop:
 	}
 
 	return nil
-}
-
-// BalanceChange is a string encoded int64
-type BalanceChange int64
-
-// UnmarshalJSON implements json.Unmarshaler
-func (b *BalanceChange) UnmarshalJSON(data []byte) (err error) {
-	var s string
-	if err = json.Unmarshal(data, &s); err != nil {
-		return err
-	}
-
-	*(*int64)(b), err = strconv.ParseInt(s, 0, 64)
-
-	return err
 }
 
 // Operation represents an operation included into block
