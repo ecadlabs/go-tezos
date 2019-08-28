@@ -2,11 +2,22 @@ package tezos
 
 import (
 	"encoding/json"
+	"math/big"
 )
 
 // OperationElem must be implemented by all operation elements
 type OperationElem interface {
 	OperationElemKind() string
+}
+
+// BalanceUpdatesOperation is implemented by operations providing balance updates
+type BalanceUpdatesOperation interface {
+	BalanceUpdates() BalanceUpdates
+}
+
+// OperationWithFee is implemented by operations with fees
+type OperationWithFee interface {
+	OperationFee() *big.Int
 }
 
 // GenericOperationElem is a most generic element type
@@ -111,6 +122,14 @@ type TransactionOperationElem struct {
 // BalanceUpdates implements BalanceUpdateOperation
 func (el *TransactionOperationElem) BalanceUpdates() BalanceUpdates {
 	return el.Metadata.BalanceUpdates
+}
+
+// OperationFee implements OperationWithFee
+func (el *TransactionOperationElem) OperationFee() *big.Int {
+	if el.Fee != nil {
+		return &el.Fee.Int
+	}
+	return nil
 }
 
 // TransactionOperationMetadata represents a transaction operation metadata
@@ -232,6 +251,14 @@ type RevealOperationElem struct {
 	Metadata             RevealOperationMetadata `json:"metadata" yaml:"metadata"`
 }
 
+// OperationFee implements OperationWithFee
+func (el *RevealOperationElem) OperationFee() *big.Int {
+	if el.Fee != nil {
+		return &el.Fee.Int
+	}
+	return nil
+}
+
 // BalanceUpdates implements BalanceUpdateOperation
 func (el *RevealOperationElem) BalanceUpdates() BalanceUpdates {
 	return el.Metadata.BalanceUpdates
@@ -255,6 +282,14 @@ type OriginationOperationElem struct {
 	Delegate             string                       `json:"delegate,omitempty" yaml:"delegate,omitempty"`
 	Script               *ScriptedContracts           `json:"script,omitempty" yaml:"script,omitempty"`
 	Metadata             OriginationOperationMetadata `json:"metadata" yaml:"metadata"`
+}
+
+// OperationFee implements OperationWithFee
+func (el *OriginationOperationElem) OperationFee() *big.Int {
+	if el.Fee != nil {
+		return &el.Fee.Int
+	}
+	return nil
 }
 
 // BalanceUpdates implements BalanceUpdateOperation
@@ -300,6 +335,14 @@ type DelegationOperationElem struct {
 	Delegate             string                      `json:"delegate,omitempty" yaml:"delegate,omitempty"`
 	Script               *ScriptedContracts          `json:"script,omitempty" yaml:"script,omitempty"`
 	Metadata             DelegationOperationMetadata `json:"metadata" yaml:"metadata"`
+}
+
+// OperationFee implements OperationWithFee
+func (el *DelegationOperationElem) OperationFee() *big.Int {
+	if el.Fee != nil {
+		return &el.Fee.Int
+	}
+	return nil
 }
 
 // BalanceUpdates implements BalanceUpdateOperation
@@ -389,11 +432,6 @@ opLoop:
 	return nil
 }
 
-// BalanceUpdatesOperation implemented by operations providing balance updates
-type BalanceUpdatesOperation interface {
-	BalanceUpdates() BalanceUpdates
-}
-
 // Operation represents an operation included into block
 type Operation struct {
 	Protocol  string            `json:"protocol" yaml:"protocol"`
@@ -452,4 +490,9 @@ var (
 	_ BalanceUpdatesOperation = &RevealOperationElem{}
 	_ BalanceUpdatesOperation = &OriginationOperationElem{}
 	_ BalanceUpdatesOperation = &DelegationOperationElem{}
+
+	_ OperationWithFee = &TransactionOperationElem{}
+	_ OperationWithFee = &RevealOperationElem{}
+	_ OperationWithFee = &OriginationOperationElem{}
+	_ OperationWithFee = &DelegationOperationElem{}
 )
