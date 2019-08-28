@@ -129,7 +129,7 @@ func (el *TransactionOperationElem) OperationFee() *big.Int {
 	if el.Fee != nil {
 		return &el.Fee.Int
 	}
-	return nil
+	return big.NewInt(0)
 }
 
 // TransactionOperationMetadata represents a transaction operation metadata
@@ -256,7 +256,7 @@ func (el *RevealOperationElem) OperationFee() *big.Int {
 	if el.Fee != nil {
 		return &el.Fee.Int
 	}
-	return nil
+	return big.NewInt(0)
 }
 
 // BalanceUpdates implements BalanceUpdateOperation
@@ -289,7 +289,7 @@ func (el *OriginationOperationElem) OperationFee() *big.Int {
 	if el.Fee != nil {
 		return &el.Fee.Int
 	}
-	return nil
+	return big.NewInt(0)
 }
 
 // BalanceUpdates implements BalanceUpdateOperation
@@ -342,7 +342,7 @@ func (el *DelegationOperationElem) OperationFee() *big.Int {
 	if el.Fee != nil {
 		return &el.Fee.Int
 	}
-	return nil
+	return big.NewInt(0)
 }
 
 // BalanceUpdates implements BalanceUpdateOperation
