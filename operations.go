@@ -82,6 +82,11 @@ type EndorsementOperationElem struct {
 	Metadata             EndorsementOperationMetadata `json:"metadata" yaml:"metadata"`
 }
 
+// BalanceUpdates implements BalanceUpdateOperation
+func (el *EndorsementOperationElem) BalanceUpdates() BalanceUpdates {
+	return el.Metadata.BalanceUpdates
+}
+
 // EndorsementOperationMetadata represents an endorsement operation metadata
 type EndorsementOperationMetadata struct {
 	BalanceUpdates BalanceUpdates `json:"balance_updates" yaml:"balance_updates"`
@@ -101,6 +106,11 @@ type TransactionOperationElem struct {
 	Destination          string                       `json:"destination" yaml:"destination"`
 	Parameters           map[string]interface{}       `json:"parameters,omitempty" yaml:"parameters,omitempty"`
 	Metadata             TransactionOperationMetadata `json:"metadata" yaml:"metadata"`
+}
+
+// BalanceUpdates implements BalanceUpdateOperation
+func (el *TransactionOperationElem) BalanceUpdates() BalanceUpdates {
+	return el.Metadata.BalanceUpdates
 }
 
 // TransactionOperationMetadata represents a transaction operation metadata
@@ -148,6 +158,11 @@ type SeedNonceRevelationOperationElem struct {
 	Metadata             BalanceUpdatesOperationMetadata `json:"metadata" yaml:"metadata"`
 }
 
+// BalanceUpdates implements BalanceUpdateOperation
+func (el *SeedNonceRevelationOperationElem) BalanceUpdates() BalanceUpdates {
+	return el.Metadata.BalanceUpdates
+}
+
 // BalanceUpdatesOperationMetadata contains balance updates only
 type BalanceUpdatesOperationMetadata struct {
 	BalanceUpdates BalanceUpdates `json:"balance_updates" yaml:"balance_updates"`
@@ -174,6 +189,11 @@ type DoubleEndorsementEvidenceOperationElem struct {
 	Metadata             BalanceUpdatesOperationMetadata `json:"metadata" yaml:"metadata"`
 }
 
+// BalanceUpdates implements BalanceUpdateOperation
+func (el *DoubleEndorsementEvidenceOperationElem) BalanceUpdates() BalanceUpdates {
+	return el.Metadata.BalanceUpdates
+}
+
 // DoubleBakingEvidenceOperationElem represents double_baking_evidence operation
 type DoubleBakingEvidenceOperationElem struct {
 	GenericOperationElem `yaml:",inline"`
@@ -182,12 +202,22 @@ type DoubleBakingEvidenceOperationElem struct {
 	Metadata             BalanceUpdatesOperationMetadata `json:"metadata" yaml:"metadata"`
 }
 
+// BalanceUpdates implements BalanceUpdateOperation
+func (el *DoubleBakingEvidenceOperationElem) BalanceUpdates() BalanceUpdates {
+	return el.Metadata.BalanceUpdates
+}
+
 // ActivateAccountOperationElem represents activate_account operation
 type ActivateAccountOperationElem struct {
 	GenericOperationElem `yaml:",inline"`
 	PKH                  string                          `json:"pkh" yaml:"pkh"`
 	Secret               string                          `json:"secret" yaml:"secret"`
 	Metadata             BalanceUpdatesOperationMetadata `json:"metadata" yaml:"metadata"`
+}
+
+// BalanceUpdates implements BalanceUpdateOperation
+func (el *ActivateAccountOperationElem) BalanceUpdates() BalanceUpdates {
+	return el.Metadata.BalanceUpdates
 }
 
 // RevealOperationElem represents a reveal operation
@@ -200,6 +230,11 @@ type RevealOperationElem struct {
 	StorageLimit         *BigInt                 `json:"storage_limit" yaml:"storage_limit"`
 	PublicKey            string                  `json:"public_key" yaml:"public_key"`
 	Metadata             RevealOperationMetadata `json:"metadata" yaml:"metadata"`
+}
+
+// BalanceUpdates implements BalanceUpdateOperation
+func (el *RevealOperationElem) BalanceUpdates() BalanceUpdates {
+	return el.Metadata.BalanceUpdates
 }
 
 // RevealOperationMetadata represents a reveal operation metadata
@@ -220,6 +255,11 @@ type OriginationOperationElem struct {
 	Delegate             string                       `json:"delegate,omitempty" yaml:"delegate,omitempty"`
 	Script               *ScriptedContracts           `json:"script,omitempty" yaml:"script,omitempty"`
 	Metadata             OriginationOperationMetadata `json:"metadata" yaml:"metadata"`
+}
+
+// BalanceUpdates implements BalanceUpdateOperation
+func (el *OriginationOperationElem) BalanceUpdates() BalanceUpdates {
+	return el.Metadata.BalanceUpdates
 }
 
 // ScriptedContracts corresponds to $scripted.contracts
@@ -260,6 +300,11 @@ type DelegationOperationElem struct {
 	Delegate             string                      `json:"delegate,omitempty" yaml:"delegate,omitempty"`
 	Script               *ScriptedContracts          `json:"script,omitempty" yaml:"script,omitempty"`
 	Metadata             DelegationOperationMetadata `json:"metadata" yaml:"metadata"`
+}
+
+// BalanceUpdates implements BalanceUpdateOperation
+func (el *DelegationOperationElem) BalanceUpdates() BalanceUpdates {
+	return el.Metadata.BalanceUpdates
 }
 
 // DelegationOperationMetadata represents a delegation operation metadata
@@ -344,6 +389,11 @@ opLoop:
 	return nil
 }
 
+// BalanceUpdatesOperation implemented by operations providing balance updates
+type BalanceUpdatesOperation interface {
+	BalanceUpdates() BalanceUpdates
+}
+
 // Operation represents an operation included into block
 type Operation struct {
 	Protocol  string            `json:"protocol" yaml:"protocol"`
@@ -391,3 +441,15 @@ type OperationWithErrorAlt OperationWithError
 func (o *OperationWithErrorAlt) UnmarshalJSON(data []byte) error {
 	return unmarshalHeterogeneousJSONArray(data, &o.Hash, (*OperationWithError)(o))
 }
+
+var (
+	_ BalanceUpdatesOperation = &EndorsementOperationElem{}
+	_ BalanceUpdatesOperation = &TransactionOperationElem{}
+	_ BalanceUpdatesOperation = &SeedNonceRevelationOperationElem{}
+	_ BalanceUpdatesOperation = &DoubleEndorsementEvidenceOperationElem{}
+	_ BalanceUpdatesOperation = &DoubleBakingEvidenceOperationElem{}
+	_ BalanceUpdatesOperation = &ActivateAccountOperationElem{}
+	_ BalanceUpdatesOperation = &RevealOperationElem{}
+	_ BalanceUpdatesOperation = &OriginationOperationElem{}
+	_ BalanceUpdatesOperation = &DelegationOperationElem{}
+)
