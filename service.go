@@ -2,11 +2,14 @@ package tezos
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"math/big"
 	"net/http"
 	"net/url"
 	"time"
+
+	"gopkg.in/yaml.v3"
 )
 
 // Service implements fetching of information from Tezos nodes via JSON.
@@ -166,19 +169,28 @@ type InvalidBlock struct {
 
 type proposalsRPCResponse = [][]interface{}
 
-// Just suppress UnmarshalJSON
-type bigIntStr big.Int
-
-func (z *bigIntStr) UnmarshalText(data []byte) error {
-	return (*big.Int)(z).UnmarshalText(data)
+// BigInt overrides UnmarshalJSON for big.Int
+type BigInt struct {
+	big.Int
 }
 
-func (z *bigIntStr) MarshalJSON() ([]byte, error) {
-	return (*big.Int)(z).MarshalText()
+// UnmarshalJSON implements json.Unmarshaler
+func (z *BigInt) UnmarshalJSON(data []byte) error {
+	var s string
+	// basically unquote only
+	if err := json.Unmarshal(data, &s); err != nil {
+		return err
+	}
+
+	return z.UnmarshalText([]byte(s))
 }
 
-func (z *bigIntStr) Int64() int64 {
-	return (*big.Int)(z).Int64()
+// MarshalYAML implements yaml.Marshaler
+func (z *BigInt) MarshalYAML() (interface{}, error) {
+	return &yaml.Node{
+		Kind:  yaml.ScalarNode,
+		Value: z.String(),
+	}, nil
 }
 
 // GetNetworkStats returns current network stats https://tezos.gitlab.io/betanet/api/rpc.html#get-network-stat
@@ -483,12 +495,12 @@ func (s *Service) GetDelegateBalance(ctx context.Context, chainID string, blockI
 		return nil, err
 	}
 
-	var balance bigIntStr
+	var balance BigInt
 	if err := s.Client.Do(req, &balance); err != nil {
 		return nil, err
 	}
 
-	return (*big.Int)(&balance), nil
+	return (*big.Int)(&balance.Int), nil
 }
 
 // GetContractBalance returns a contract's balance http://tezos.gitlab.io/mainnet/api/rpc.html#get-block-id-context-contracts-contract-id-balance
@@ -499,12 +511,12 @@ func (s *Service) GetContractBalance(ctx context.Context, chainID string, blockI
 		return nil, err
 	}
 
-	var balance bigIntStr
+	var balance BigInt
 	if err := s.Client.Do(req, &balance); err != nil {
 		return nil, err
 	}
 
-	return (*big.Int)(&balance), nil
+	return (*big.Int)(&balance.Int), nil
 }
 
 // GetBootstrapped reads from the bootstrapped blocks stream http://tezos.gitlab.io/mainnet/api/rpc.html#get-monitor-bootstrapped

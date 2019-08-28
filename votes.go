@@ -2,21 +2,21 @@ package tezos
 
 // Ballot holds information about a Tezos ballot
 type Ballot struct {
-	PKH    string `json:"pkh"`
-	Ballot string `json:"ballot"`
+	PKH    string `json:"pkh" yaml:"pkh"`
+	Ballot string `json:"ballot" yaml:"ballot"`
 }
 
 // BallotListing holds information about a Tezos delegate and his voting weight in rolls
 type BallotListing struct {
-	PKH   string `json:"pkh"`
-	Rolls int64  `json:"rolls"`
+	PKH   string `json:"pkh" yaml:"pkh"`
+	Rolls int64  `json:"rolls" yaml:"rolls"`
 }
 
 // Ballots holds summary data about a voting period
 type Ballots struct {
-	Yay  int64 `json:"yay"`
-	Nay  int64 `json:"nay"`
-	Pass int64 `json:"pass"`
+	Yay  int64 `json:"yay" yaml:"yay"`
+	Nay  int64 `json:"nay" yaml:"nay"`
+	Pass int64 `json:"pass" yaml:"pass"`
 }
 
 // Proposal holds summary data about a proposal and his number of supporter
