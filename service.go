@@ -8,6 +8,8 @@ import (
 	"net/http"
 	"net/url"
 	"time"
+
+	"gopkg.in/yaml.v3"
 )
 
 // Service implements fetching of information from Tezos nodes via JSON.
@@ -181,6 +183,14 @@ func (z *BigInt) UnmarshalJSON(data []byte) error {
 	}
 
 	return z.UnmarshalText([]byte(s))
+}
+
+// MarshalYAML implements yaml.Marshaler
+func (z *BigInt) MarshalYAML() (interface{}, error) {
+	return &yaml.Node{
+		Kind:  yaml.ScalarNode,
+		Value: z.String(),
+	}, nil
 }
 
 // GetNetworkStats returns current network stats https://tezos.gitlab.io/betanet/api/rpc.html#get-network-stat

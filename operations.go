@@ -11,7 +11,7 @@ type OperationElem interface {
 
 // GenericOperationElem is a most generic element type
 type GenericOperationElem struct {
-	Kind string `json:"kind"`
+	Kind string `json:"kind" yaml:"kind"`
 }
 
 // OperationElemKind implements OperationElem
@@ -77,129 +77,129 @@ opLoop:
 
 // EndorsementOperationElem represents an endorsement operation
 type EndorsementOperationElem struct {
-	GenericOperationElem
-	Level    int                          `json:"level"`
-	Metadata EndorsementOperationMetadata `json:"metadata"`
+	GenericOperationElem `yaml:",inline"`
+	Level                int                          `json:"level" yaml:"level"`
+	Metadata             EndorsementOperationMetadata `json:"metadata" yaml:"metadata"`
 }
 
 // EndorsementOperationMetadata represents an endorsement operation metadata
 type EndorsementOperationMetadata struct {
-	BalanceUpdates BalanceUpdates `json:"balance_updates"`
-	Delegate       string         `json:"delegate"`
-	Slots          []int          `json:"slots"`
+	BalanceUpdates BalanceUpdates `json:"balance_updates" yaml:"balance_updates"`
+	Delegate       string         `json:"delegate" yaml:"delegate"`
+	Slots          []int          `json:"slots" yaml:"slots,flow"`
 }
 
 // TransactionOperationElem represents a transaction operation
 type TransactionOperationElem struct {
-	GenericOperationElem
-	Source       string                       `json:"source"`
-	Fee          BigInt                       `json:"fee"`
-	Counter      BigInt                       `json:"counter"`
-	GasLimit     BigInt                       `json:"gas_limit"`
-	StorageLimit BigInt                       `json:"storage_limit"`
-	Amount       BigInt                       `json:"amount"`
-	Destination  string                       `json:"destination"`
-	Parameters   map[string]interface{}       `json:"parameters,omitempty"`
-	Metadata     TransactionOperationMetadata `json:"metadata"`
+	GenericOperationElem `yaml:",inline"`
+	Source               string                       `json:"source" yaml:"source"`
+	Fee                  *BigInt                      `json:"fee" yaml:"fee"`
+	Counter              *BigInt                      `json:"counter" yaml:"counter"`
+	GasLimit             *BigInt                      `json:"gas_limit" yaml:"gas_limit"`
+	StorageLimit         *BigInt                      `json:"storage_limit" yaml:"storage_limit"`
+	Amount               *BigInt                      `json:"amount" yaml:"amount"`
+	Destination          string                       `json:"destination" yaml:"destination"`
+	Parameters           map[string]interface{}       `json:"parameters,omitempty" yaml:"parameters,omitempty"`
+	Metadata             TransactionOperationMetadata `json:"metadata" yaml:"metadata"`
 }
 
 // TransactionOperationMetadata represents a transaction operation metadata
 type TransactionOperationMetadata struct {
-	BalanceUpdates  BalanceUpdates             `json:"balance_updates"`
-	OperationResult TransactionOperationResult `json:"operation_result"`
+	BalanceUpdates  BalanceUpdates             `json:"balance_updates" yaml:"balance_updates"`
+	OperationResult TransactionOperationResult `json:"operation_result" yaml:"operation_result"`
 }
 
 // TransactionOperationResult represents a transaction operation result
 type TransactionOperationResult struct {
-	Status              string                 `json:"status"`
-	Storage             map[string]interface{} `json:"storage,omitempty"`
-	BalanceUpdates      BalanceUpdates         `json:"balance_updates,omitempty"`
-	OriginatedContracts []string               `json:"originated_contracts,omitempty"`
-	ConsumedGas         *BigInt                `json:"consumed_gas,omitempty"`
-	StorageSize         *BigInt                `json:"storage_size,omitempty"`
-	PaidStorageSizeDiff *BigInt                `json:"paid_storage_size_diff,omitempty"`
-	Errors              Errors                 `json:"errors,omitempty"`
+	Status              string                 `json:"status" yaml:"status"`
+	Storage             map[string]interface{} `json:"storage,omitempty" yaml:"storage,omitempty"`
+	BalanceUpdates      BalanceUpdates         `json:"balance_updates,omitempty" yaml:"balance_updates,omitempty"`
+	OriginatedContracts []string               `json:"originated_contracts,omitempty" yaml:"originated_contracts,omitempty"`
+	ConsumedGas         *BigInt                `json:"consumed_gas,omitempty" yaml:"consumed_gas,omitempty"`
+	StorageSize         *BigInt                `json:"storage_size,omitempty" yaml:"storage_size,omitempty"`
+	PaidStorageSizeDiff *BigInt                `json:"paid_storage_size_diff,omitempty" yaml:"paid_storage_size_diff,omitempty"`
+	Errors              Errors                 `json:"errors,omitempty" yaml:"errors,omitempty"`
 }
 
 // BallotOperationElem represents a ballot operation
 type BallotOperationElem struct {
-	GenericOperationElem
-	Source   string                 `json:"source"`
-	Period   int                    `json:"period"`
-	Proposal string                 `json:"proposal"`
-	Ballot   string                 `json:"ballot"`
-	Metadata map[string]interface{} `json:"metadata"`
+	GenericOperationElem `yaml:",inline"`
+	Source               string                 `json:"source" yaml:"source"`
+	Period               int                    `json:"period" yaml:"period"`
+	Proposal             string                 `json:"proposal" yaml:"proposal"`
+	Ballot               string                 `json:"ballot" yaml:"ballot"`
+	Metadata             map[string]interface{} `json:"metadata" yaml:"metadata"`
 }
 
 // ProposalOperationElem represents a proposal operation
 type ProposalOperationElem struct {
-	GenericOperationElem
-	Source    string                 `json:"source"`
-	Period    int                    `json:"period"`
-	Proposals []string               `json:"proposals"`
-	Metadata  map[string]interface{} `json:"metadata"`
+	GenericOperationElem `yaml:",inline"`
+	Source               string                 `json:"source" yaml:"source"`
+	Period               int                    `json:"period" yaml:"period"`
+	Proposals            []string               `json:"proposals" yaml:"proposals"`
+	Metadata             map[string]interface{} `json:"metadata" yaml:"metadata"`
 }
 
 // SeedNonceRevelationOperationElem represents seed_nonce_revelation operation
 type SeedNonceRevelationOperationElem struct {
-	GenericOperationElem
-	Level    int32                           `json:"level"`
-	Nonce    string                          `json:"nonce"`
-	Metadata BalanceUpdatesOperationMetadata `json:"metadata"`
+	GenericOperationElem `yaml:",inline"`
+	Level                int32                           `json:"level" yaml:"level"`
+	Nonce                string                          `json:"nonce" yaml:"nonce"`
+	Metadata             BalanceUpdatesOperationMetadata `json:"metadata" yaml:"metadata"`
 }
 
 // BalanceUpdatesOperationMetadata contains balance updates only
 type BalanceUpdatesOperationMetadata struct {
-	BalanceUpdates BalanceUpdates `json:"balance_updates"`
+	BalanceUpdates BalanceUpdates `json:"balance_updates" yaml:"balance_updates"`
 }
 
 // InlinedEndorsement corresponds to $inlined.endorsement
 type InlinedEndorsement struct {
-	Branch     string                     `json:"branch"`
-	Operations InlinedEndorsementContents `json:"operations"`
-	Signature  string                     `json:"signature"`
+	Branch     string                     `json:"branch" yaml:"branch"`
+	Operations InlinedEndorsementContents `json:"operations" yaml:"operations"`
+	Signature  string                     `json:"signature" yaml:"signature"`
 }
 
 // InlinedEndorsementContents corresponds to $inlined.endorsement.contents
 type InlinedEndorsementContents struct {
-	Kind  string `json:"endorsement"`
-	Level int    `json:"level"`
+	Kind  string `json:"endorsement" yaml:"endorsement"`
+	Level int    `json:"level" yaml:"level"`
 }
 
 // DoubleEndorsementEvidenceOperationElem represents double_endorsement_evidence operation
 type DoubleEndorsementEvidenceOperationElem struct {
-	GenericOperationElem
-	Operation1 InlinedEndorsement              `json:"op1"`
-	Operation2 InlinedEndorsement              `json:"op2"`
-	Metadata   BalanceUpdatesOperationMetadata `json:"metadata"`
+	GenericOperationElem `yaml:",inline"`
+	Operation1           InlinedEndorsement              `json:"op1" yaml:"op1"`
+	Operation2           InlinedEndorsement              `json:"op2" yaml:"op2"`
+	Metadata             BalanceUpdatesOperationMetadata `json:"metadata" yaml:"metadata"`
 }
 
 // DoubleBakingEvidenceOperationElem represents double_baking_evidence operation
 type DoubleBakingEvidenceOperationElem struct {
-	GenericOperationElem
-	BlockHeader1 RawBlockHeader                  `json:"bh1"`
-	BlockHeader2 RawBlockHeader                  `json:"bh2"`
-	Metadata     BalanceUpdatesOperationMetadata `json:"metadata"`
+	GenericOperationElem `yaml:",inline"`
+	BlockHeader1         RawBlockHeader                  `json:"bh1" yaml:"bh1"`
+	BlockHeader2         RawBlockHeader                  `json:"bh2" yaml:"bh2"`
+	Metadata             BalanceUpdatesOperationMetadata `json:"metadata" yaml:"metadata"`
 }
 
 // ActivateAccountOperationElem represents activate_account operation
 type ActivateAccountOperationElem struct {
-	GenericOperationElem
-	PKH      string                          `json:"pkh"`
-	Secret   string                          `json:"secret"`
-	Metadata BalanceUpdatesOperationMetadata `json:"metadata"`
+	GenericOperationElem `yaml:",inline"`
+	PKH                  string                          `json:"pkh" yaml:"pkh"`
+	Secret               string                          `json:"secret" yaml:"secret"`
+	Metadata             BalanceUpdatesOperationMetadata `json:"metadata" yaml:"metadata"`
 }
 
 // RevealOperationElem represents a reveal operation
 type RevealOperationElem struct {
-	GenericOperationElem
-	Source       string                  `json:"source"`
-	Fee          BigInt                  `json:"fee"`
-	Counter      BigInt                  `json:"counter"`
-	GasLimit     BigInt                  `json:"gas_limit"`
-	StorageLimit BigInt                  `json:"storage_limit"`
-	PublicKey    string                  `json:"public_key"`
-	Metadata     RevealOperationMetadata `json:"metadata"`
+	GenericOperationElem `yaml:",inline"`
+	Source               string                  `json:"source" yaml:"source"`
+	Fee                  *BigInt                 `json:"fee" yaml:"fee"`
+	Counter              *BigInt                 `json:"counter" yaml:"counter"`
+	GasLimit             *BigInt                 `json:"gas_limit" yaml:"gas_limit"`
+	StorageLimit         *BigInt                 `json:"storage_limit" yaml:"storage_limit"`
+	PublicKey            string                  `json:"public_key" yaml:"public_key"`
+	Metadata             RevealOperationMetadata `json:"metadata" yaml:"metadata"`
 }
 
 // RevealOperationMetadata represents a reveal operation metadata
@@ -207,71 +207,71 @@ type RevealOperationMetadata DelegationOperationMetadata
 
 // OriginationOperationElem represents a origination operation
 type OriginationOperationElem struct {
-	GenericOperationElem
-	Source        string                       `json:"source"`
-	Fee           BigInt                       `json:"fee"`
-	Counter       BigInt                       `json:"counter"`
-	GasLimit      BigInt                       `json:"gas_limit"`
-	StorageLimit  BigInt                       `json:"storage_limit"`
-	ManagerPubKey string                       `json:"managerPubkey"`
-	Balance       BigInt                       `json:"balance"`
-	Spendable     *bool                        `json:"spendable,omitempty"`
-	Delegatable   *bool                        `json:"delegatable,omitempty"`
-	Delegate      string                       `json:"delegate,omitempty"`
-	Script        *ScriptedContracts           `json:"script,omitempty"`
-	Metadata      OriginationOperationMetadata `json:"metadata"`
+	GenericOperationElem `yaml:",inline"`
+	Source               string                       `json:"source" yaml:"source"`
+	Fee                  *BigInt                      `json:"fee" yaml:"fee"`
+	Counter              *BigInt                      `json:"counter" yaml:"counter"`
+	GasLimit             *BigInt                      `json:"gas_limit" yaml:"gas_limit"`
+	StorageLimit         *BigInt                      `json:"storage_limit" yaml:"storage_limit"`
+	ManagerPubKey        string                       `json:"managerPubkey" yaml:"managerPubkey"`
+	Balance              *BigInt                      `json:"balance" yaml:"balance"`
+	Spendable            *bool                        `json:"spendable,omitempty" yaml:"spendable,omitempty"`
+	Delegatable          *bool                        `json:"delegatable,omitempty" yaml:"delegatable,omitempty"`
+	Delegate             string                       `json:"delegate,omitempty" yaml:"delegate,omitempty"`
+	Script               *ScriptedContracts           `json:"script,omitempty" yaml:"script,omitempty"`
+	Metadata             OriginationOperationMetadata `json:"metadata" yaml:"metadata"`
 }
 
 // ScriptedContracts corresponds to $scripted.contracts
 type ScriptedContracts struct {
-	Code    map[string]interface{} `json:"code"`
-	Storage map[string]interface{} `json:"storage"`
+	Code    map[string]interface{} `json:"code" yaml:"code"`
+	Storage map[string]interface{} `json:"storage" yaml:"storage"`
 }
 
 // OriginationOperationMetadata represents a origination operation metadata
 type OriginationOperationMetadata struct {
-	BalanceUpdates  BalanceUpdates             `json:"balance_updates"`
-	OperationResult OriginationOperationResult `json:"operation_result"`
+	BalanceUpdates  BalanceUpdates             `json:"balance_updates" yaml:"balance_updates"`
+	OperationResult OriginationOperationResult `json:"operation_result" yaml:"operation_result"`
 }
 
 // OriginationOperationResult represents a origination operation result
 type OriginationOperationResult struct {
-	Status              string         `json:"status"`
-	BalanceUpdates      BalanceUpdates `json:"balance_updates,omitempty"`
-	OriginatedContracts []string       `json:"originated_contracts,omitempty"`
-	ConsumedGas         *BigInt        `json:"consumed_gas,omitempty"`
-	StorageSize         *BigInt        `json:"storage_size,omitempty"`
-	PaidStorageSizeDiff *BigInt        `json:"paid_storage_size_diff,omitempty"`
-	Errors              Errors         `json:"errors,omitempty"`
+	Status              string         `json:"status" yaml:"status"`
+	BalanceUpdates      BalanceUpdates `json:"balance_updates,omitempty" yaml:"balance_updates,omitempty"`
+	OriginatedContracts []string       `json:"originated_contracts,omitempty" yaml:"originated_contracts,omitempty"`
+	ConsumedGas         *BigInt        `json:"consumed_gas,omitempty" yaml:"consumed_gas,omitempty"`
+	StorageSize         *BigInt        `json:"storage_size,omitempty" yaml:"storage_size,omitempty"`
+	PaidStorageSizeDiff *BigInt        `json:"paid_storage_size_diff,omitempty" yaml:"paid_storage_size_diff,omitempty"`
+	Errors              Errors         `json:"errors,omitempty" yaml:"errors,omitempty"`
 }
 
 // DelegationOperationElem represents a delegation operation
 type DelegationOperationElem struct {
-	GenericOperationElem
-	Source        string                      `json:"source"`
-	Fee           BigInt                      `json:"fee"`
-	Counter       BigInt                      `json:"counter"`
-	GasLimit      BigInt                      `json:"gas_limit"`
-	StorageLimit  BigInt                      `json:"storage_limit"`
-	ManagerPubKey string                      `json:"managerPubkey"`
-	Balance       BigInt                      `json:"balance"`
-	Spendable     *bool                       `json:"spendable,omitempty"`
-	Delegatable   *bool                       `json:"delegatable,omitempty"`
-	Delegate      string                      `json:"delegate,omitempty"`
-	Script        *ScriptedContracts          `json:"script,omitempty"`
-	Metadata      DelegationOperationMetadata `json:"metadata"`
+	GenericOperationElem `yaml:",inline"`
+	Source               string                      `json:"source" yaml:"source"`
+	Fee                  *BigInt                     `json:"fee" yaml:"fee"`
+	Counter              *BigInt                     `json:"counter" yaml:"counter"`
+	GasLimit             *BigInt                     `json:"gas_limit" yaml:"gas_limit"`
+	StorageLimit         *BigInt                     `json:"storage_limit" yaml:"storage_limit"`
+	ManagerPubKey        string                      `json:"managerPubkey" yaml:"managerPubkey"`
+	Balance              *BigInt                     `json:"balance" yaml:"balance"`
+	Spendable            *bool                       `json:"spendable,omitempty" yaml:"spendable,omitempty"`
+	Delegatable          *bool                       `json:"delegatable,omitempty" yaml:"delegatable,omitempty"`
+	Delegate             string                      `json:"delegate,omitempty" yaml:"delegate,omitempty"`
+	Script               *ScriptedContracts          `json:"script,omitempty" yaml:"script,omitempty"`
+	Metadata             DelegationOperationMetadata `json:"metadata" yaml:"metadata"`
 }
 
 // DelegationOperationMetadata represents a delegation operation metadata
 type DelegationOperationMetadata struct {
-	BalanceUpdates  BalanceUpdates            `json:"balance_updates"`
-	OperationResult DelegationOperationResult `json:"operation_result"`
+	BalanceUpdates  BalanceUpdates            `json:"balance_updates" yaml:"balance_updates"`
+	OperationResult DelegationOperationResult `json:"operation_result" yaml:"operation_result"`
 }
 
 // DelegationOperationResult represents a delegation operation result
 type DelegationOperationResult struct {
-	Status string `json:"status"`
-	Errors Errors `json:"errors"`
+	Status string `json:"status" yaml:"status"`
+	Errors Errors `json:"errors" yaml:"errors"`
 }
 
 // BalanceUpdate is a variable structure depending on the Kind field
@@ -281,8 +281,8 @@ type BalanceUpdate interface {
 
 // GenericBalanceUpdate holds the common values among all BalanceUpdatesType variants
 type GenericBalanceUpdate struct {
-	Kind   string `json:"kind"`
-	Change int64  `json:"change,string"`
+	Kind   string `json:"kind" yaml:"kind"`
+	Change int64  `json:"change,string" yaml:"change"`
 }
 
 // BalanceUpdateKind returns the BalanceUpdateType's Kind field
@@ -292,16 +292,16 @@ func (g *GenericBalanceUpdate) BalanceUpdateKind() string {
 
 // ContractBalanceUpdate is a BalanceUpdatesType variant for Kind=contract
 type ContractBalanceUpdate struct {
-	GenericBalanceUpdate
-	Contract string `json:"contract"`
+	GenericBalanceUpdate `yaml:",inline"`
+	Contract             string `json:"contract" yaml:"contract"`
 }
 
 // FreezerBalanceUpdate is a BalanceUpdatesType variant for Kind=freezer
 type FreezerBalanceUpdate struct {
-	GenericBalanceUpdate
-	Category string `json:"category"`
-	Delegate string `json:"delegate"`
-	Level    int    `json:"level"`
+	GenericBalanceUpdate `yaml:",inline"`
+	Category             string `json:"category" yaml:"category"`
+	Delegate             string `json:"delegate" yaml:"delegate"`
+	Level                int    `json:"level" yaml:"level"`
 }
 
 // BalanceUpdates is a list of balance update operations
@@ -346,12 +346,12 @@ opLoop:
 
 // Operation represents an operation included into block
 type Operation struct {
-	Protocol  string            `json:"protocol"`
-	ChainID   string            `json:"chain_id"`
-	Hash      string            `json:"hash"`
-	Branch    string            `json:"branch"`
-	Contents  OperationElements `json:"contents"`
-	Signature string            `json:"signature"`
+	Protocol  string            `json:"protocol" yaml:"protocol"`
+	ChainID   string            `json:"chain_id" yaml:"chain_id"`
+	Hash      string            `json:"hash" yaml:"hash"`
+	Branch    string            `json:"branch" yaml:"branch"`
+	Contents  OperationElements `json:"contents" yaml:"contents"`
+	Signature string            `json:"signature" yaml:"signature"`
 }
 
 /*
@@ -380,7 +380,7 @@ func (o *OperationAlt) UnmarshalJSON(data []byte) error {
 // OperationWithError represents unsuccessful operation
 type OperationWithError struct {
 	Operation
-	Error Errors `json:"error"`
+	Error Errors `json:"error" yaml:"error"`
 }
 
 // OperationWithErrorAlt is a heterogeneously encoded OperationWithError with hash as a first array member.
