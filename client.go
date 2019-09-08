@@ -120,7 +120,8 @@ func (c *RPCClient) handleNormalResponse(ctx context.Context, resp *http.Respons
 			chunkVal := reflect.New(typ.Elem())
 
 			if err := dec.Decode(chunkVal.Interface()); err != nil {
-				if err == io.EOF {
+				if err == io.EOF || err == io.ErrUnexpectedEOF {
+					// Tezos doesn't output the trailing zero lenght chunk leading to io.ErrUnexpectedEOF
 					break
 				}
 				return err
