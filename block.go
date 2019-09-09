@@ -20,8 +20,9 @@ func (hb *HexBytes) UnmarshalText(data []byte) error {
 	return nil
 }
 
-// MonitorBlock holds information about block returned by monitor heads endpoint
-type MonitorBlock struct {
+// BlockInfo holds information about block returned by monitor heads endpoint
+type BlockInfo struct {
+	Hash           string     `json:"hash" yaml:"hash"`
 	Level          int        `json:"level" yaml:"level"`
 	Proto          int        `json:"proto" yaml:"proto"`
 	Predecessor    string     `json:"predecessor" yaml:"predecessor"`
@@ -30,8 +31,6 @@ type MonitorBlock struct {
 	OperationsHash string     `json:"operations_hash" yaml:"operations_hash"`
 	Fitness        []HexBytes `json:"fitness" yaml:"fitness,flow"`
 	Context        string     `json:"context" yaml:"context"`
-	Priority       int        `json:"priority" yaml:"priority"`
-	Hash           string     `json:"hash" yaml:"hash"`
 	ProtocolData   string     `json:"protocol_data" yaml:"protocol_data"`
 }
 

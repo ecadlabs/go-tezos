@@ -12,6 +12,8 @@ import (
 	"reflect"
 	"strings"
 	"time"
+
+	log "github.com/sirupsen/logrus"
 )
 
 const (
@@ -55,6 +57,8 @@ func (c *RPCClient) NewRequest(ctx context.Context, method, urlStr string, body 
 
 // RPCClient manages communication with a Tezos RPC server.
 type RPCClient struct {
+	// Logger
+	Logger Logger
 	// HTTP client used to communicate with the Tezos node API.
 	Client *http.Client
 	// Base URL for API requests.
@@ -85,13 +89,22 @@ func NewRPCClient(httpClient *http.Client, baseURL string) (*RPCClient, error) {
 	return c, nil
 }
 
+func (c *RPCClient) log() Logger {
+	if c.Logger != nil {
+		return c.Logger
+	}
+	return log.StandardLogger()
+}
+
 func (c *RPCClient) handleNormalResponse(ctx context.Context, resp *http.Response, v interface{}) error {
 	// Normal return
-	dec := json.NewDecoder(resp.Body)
 	typ := reflect.TypeOf(v)
 
 	if typ.Kind() == reflect.Chan {
 		// Handle channel
+		dumpResponse(c.log(), log.DebugLevel, resp, false)
+		dec := json.NewDecoder(resp.Body)
+
 		cases := []reflect.SelectCase{
 			reflect.SelectCase{
 				Dir:  reflect.SelectSend,
@@ -107,11 +120,14 @@ func (c *RPCClient) handleNormalResponse(ctx context.Context, resp *http.Respons
 			chunkVal := reflect.New(typ.Elem())
 
 			if err := dec.Decode(chunkVal.Interface()); err != nil {
-				if err == io.EOF {
+				if err == io.EOF || err == io.ErrUnexpectedEOF {
+					// Tezos doesn't output the trailing zero lenght chunk leading to io.ErrUnexpectedEOF
 					break
 				}
 				return err
 			}
+
+			spewDump(c.log(), log.TraceLevel, chunkVal.Interface())
 
 			cases[0].Send = chunkVal.Elem()
 			if chosen, _, _ := reflect.Select(cases); chosen == 1 {
@@ -123,9 +139,13 @@ func (c *RPCClient) handleNormalResponse(ctx context.Context, resp *http.Respons
 	}
 
 	// Handle single object
+	dumpResponse(c.log(), log.DebugLevel, resp, true)
+	dec := json.NewDecoder(resp.Body)
 	if err := dec.Decode(&v); err != nil {
 		return err
 	}
+
+	spewDump(c.log(), log.TraceLevel, v)
 
 	return nil
 }
@@ -133,6 +153,8 @@ func (c *RPCClient) handleNormalResponse(ctx context.Context, resp *http.Respons
 // Do retrieves values from the API and marshals them into the provided interface.
 func (c *RPCClient) Do(req *http.Request, v interface{}) (err error) {
 	timestamp := time.Now()
+
+	dumpRequest(c.log(), log.DebugLevel, req)
 
 	resp, err := c.Client.Do(req)
 	if err != nil {
@@ -170,6 +192,8 @@ func (c *RPCClient) Do(req *http.Request, v interface{}) (err error) {
 	}
 
 	// Handle errors
+	dumpResponse(c.log(), log.DebugLevel, resp, true)
+
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return err

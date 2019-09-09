@@ -519,8 +519,8 @@ func (s *Service) GetContractBalance(ctx context.Context, chainID string, blockI
 	return (*big.Int)(&balance.Int), nil
 }
 
-// GetBootstrapped reads from the bootstrapped blocks stream http://tezos.gitlab.io/mainnet/api/rpc.html#get-monitor-bootstrapped
-func (s *Service) GetBootstrapped(ctx context.Context, results chan<- *BootstrappedBlock) error {
+// MonitorBootstrapped reads from the bootstrapped blocks stream http://tezos.gitlab.io/mainnet/api/rpc.html#get-monitor-bootstrapped
+func (s *Service) MonitorBootstrapped(ctx context.Context, results chan<- *BootstrappedBlock) error {
 	req, err := s.Client.NewRequest(ctx, http.MethodGet, "/monitor/bootstrapped", nil)
 	if err != nil {
 		return err
@@ -529,8 +529,8 @@ func (s *Service) GetBootstrapped(ctx context.Context, results chan<- *Bootstrap
 	return s.Client.Do(req, results)
 }
 
-// GetMonitorHeads reads from the heads blocks stream https://tezos.gitlab.io/mainnet/api/rpc.html#get-monitor-heads-chain-id
-func (s *Service) GetMonitorHeads(ctx context.Context, chainID string, results chan<- *MonitorBlock) error {
+// MonitorHeads reads from the heads blocks stream https://tezos.gitlab.io/mainnet/api/rpc.html#get-monitor-heads-chain-id
+func (s *Service) MonitorHeads(ctx context.Context, chainID string, results chan<- *BlockInfo) error {
 	req, err := s.Client.NewRequest(ctx, http.MethodGet, "/monitor/heads/"+chainID, nil)
 	if err != nil {
 		return err
