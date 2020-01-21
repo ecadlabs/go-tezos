@@ -437,7 +437,7 @@ func TestServiceGetMethods(t *testing.T) {
 			require.NoError(t, err, "error writing HTTP response")
 		}))
 
-		c, err := NewRPCClient(nil, srv.URL)
+		c, err := NewRPCClient(srv.URL)
 		require.NoError(t, err, "error creating client")
 
 		s := &Service{Client: c}

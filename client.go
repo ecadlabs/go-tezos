@@ -11,15 +11,14 @@ import (
 	"net/url"
 	"reflect"
 	"strings"
-	"time"
 
 	log "github.com/sirupsen/logrus"
 )
 
 const (
-	libraryVersion = "0.0.1"
-	userAgent      = "go-tezos/" + libraryVersion
-	mediaType      = "application/json"
+	libraryVersion   = "0.0.1"
+	defaultUserAgent = "go-tezos/" + libraryVersion
+	mediaType        = "application/json"
 )
 
 // NewRequest creates a Tezos RPC request.
@@ -28,29 +27,36 @@ func (c *RPCClient) NewRequest(ctx context.Context, method, urlStr string, body 
 	if err != nil {
 		return nil, err
 	}
-
 	u := c.BaseURL.ResolveReference(rel)
 
-	buf := new(bytes.Buffer)
+	var bodyReader io.Reader
 	if body != nil {
-		err = json.NewEncoder(buf).Encode(body)
+		var buf bytes.Buffer
+		err = json.NewEncoder(&buf).Encode(body)
 		if err != nil {
 			return nil, err
 		}
+		bodyReader = &buf
 	}
 
-	req, err := http.NewRequest(method, u.String(), buf)
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	req, err := http.NewRequestWithContext(ctx, method, u.String(), bodyReader)
 	if err != nil {
 		return nil, err
 	}
 
-	req.Header.Add("Content-Type", mediaType)
-	req.Header.Add("Accept", mediaType)
-	req.Header.Add("User-Agent", c.UserAgent)
-
-	if ctx != nil {
-		return req.WithContext(ctx), nil
+	if body != nil {
+		req.Header.Add("Content-Type", mediaType)
 	}
+	req.Header.Add("Accept", mediaType)
+
+	userAgent := c.UserAgent
+	if userAgent == "" {
+		userAgent = defaultUserAgent
+	}
+	req.Header.Add("User-Agent", c.UserAgent)
 
 	return req, nil
 }
@@ -59,34 +65,23 @@ func (c *RPCClient) NewRequest(ctx context.Context, method, urlStr string, body 
 type RPCClient struct {
 	// Logger
 	Logger Logger
-	// HTTP client used to communicate with the Tezos node API.
-	Client *http.Client
+	// HTTP transport used to communicate with the Tezos node API. Can be used for side effects.
+	Transport http.RoundTripper
 	// Base URL for API requests.
 	BaseURL *url.URL
 	// User agent name for client.
 	UserAgent string
-	// Optional callback for metrics.
-	RPCStatusCallback func(req *http.Request, status int, duration time.Duration, err error)
-	// Optional callback for metrics.
-	RPCHeaderCallback func(req *http.Request, resp *http.Response, duration time.Duration)
 }
 
 // NewRPCClient returns a new Tezos RPC client.
-func NewRPCClient(httpClient *http.Client, baseURL string) (*RPCClient, error) {
-	if httpClient == nil {
-		httpClient = http.DefaultClient
-	}
+func NewRPCClient(baseURL string) (*RPCClient, error) {
 	u, err := url.Parse(baseURL)
 	if err != nil {
 		return nil, err
 	}
-
-	c := &RPCClient{
-		Client:    httpClient,
-		BaseURL:   u,
-		UserAgent: userAgent,
-	}
-	return c, nil
+	return &RPCClient{
+		BaseURL: u,
+	}, nil
 }
 
 func (c *RPCClient) log() Logger {
@@ -150,27 +145,23 @@ func (c *RPCClient) handleNormalResponse(ctx context.Context, resp *http.Respons
 	return nil
 }
 
+func (c *RPCClient) transport() http.RoundTripper {
+	if c.Transport != nil {
+		return c.Transport
+	}
+	return http.DefaultTransport
+}
+
 // Do retrieves values from the API and marshals them into the provided interface.
 func (c *RPCClient) Do(req *http.Request, v interface{}) (err error) {
-	timestamp := time.Now()
-
 	dumpRequest(c.log(), log.DebugLevel, req)
 
-	resp, err := c.Client.Do(req)
+	client := &http.Client{
+		Transport: c.transport(),
+	}
+	resp, err := client.Do(req)
 	if err != nil {
 		return err
-	}
-
-	if c.RPCHeaderCallback != nil {
-		duration := time.Since(timestamp)
-		c.RPCHeaderCallback(req, resp, duration)
-	}
-
-	if c.RPCStatusCallback != nil {
-		defer func() {
-			duration := time.Since(timestamp)
-			c.RPCStatusCallback(req, resp.StatusCode, duration, err)
-		}()
 	}
 
 	defer func() {
@@ -178,7 +169,6 @@ func (c *RPCClient) Do(req *http.Request, v interface{}) (err error) {
 			err = rerr
 		}
 	}()
-
 	if resp.StatusCode == http.StatusNoContent {
 		return nil
 	}
