@@ -190,9 +190,8 @@ func (c *RPCClient) Do(req *http.Request, v interface{}) (err error) {
 	}
 
 	httpErr := httpError{
-		status:     resp.Status,
-		statusCode: resp.StatusCode,
-		body:       body,
+		response: resp,
+		body:     body,
 	}
 
 	if statusClass != 5 || !strings.Contains(resp.Header.Get("Content-Type"), "application/json") {

@@ -3,6 +3,7 @@ package tezos
 import (
 	"encoding/json"
 	"fmt"
+	"net/http"
 )
 
 const (
@@ -43,6 +44,7 @@ func (e *GenericError) ErrorKind() string {
 
 // HTTPStatus interface represents an unprocessed HTTP reply
 type HTTPStatus interface {
+	Response() *http.Response
 	Status() string  // e.g. "200 OK"
 	StatusCode() int // e.g. 200
 	Body() []byte
@@ -105,25 +107,28 @@ func (e Errors) ErrorKind() string {
 }
 
 type httpError struct {
-	status     string
-	statusCode int
-	body       []byte
+	response *http.Response
+	body     []byte
 }
 
 func (e *httpError) Error() string {
-	return fmt.Sprintf("tezos: HTTP status %v", e.statusCode)
+	return fmt.Sprintf("tezos: HTTP status %v", e.response.StatusCode)
 }
 
 func (e *httpError) Status() string {
-	return e.status
+	return e.response.Status
 }
 
 func (e *httpError) StatusCode() int {
-	return e.statusCode
+	return e.response.StatusCode
 }
 
 func (e *httpError) Body() []byte {
 	return e.body
+}
+
+func (e *httpError) Response() *http.Response {
+	return e.response
 }
 
 type rpcError struct {
