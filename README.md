@@ -4,7 +4,7 @@ go-tezos is a Go client library that is used to interact with a Tezos' nodes
 RPC methods.
 
 [![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/2349/badge)](https://bestpractices.coreinfrastructure.org/projects/2349)
-[![CircleCI](https://circleci.com/gh/ecadlabs/go-tezos/tree/master.svg?style=svg)](https://circleci.com/gh/ecadlabs/go-tezos/tree/master)
+[![GitHub Actions](https://github.com/ecadlabs/go-tezos/workflows/Test/badge.svg)](https://github.com/ecadlabs/go-tezos/actions)
 [![Maintainability](https://api.codeclimate.com/v1/badges/b4e610a400c496532cd3/maintainability)](https://codeclimate.com/github/ecadlabs/go-tezos/maintainability)
 [![Test Coverage](https://api.codeclimate.com/v1/badges/b4e610a400c496532cd3/test_coverage)](https://codeclimate.com/github/ecadlabs/go-tezos/test_coverage)
 
