@@ -207,7 +207,8 @@ func (s *Service) GetNetworkStats(ctx context.Context) (*NetworkStats, error) {
 	return &stats, err
 }
 
-// GetNetworkConnections returns all network connections http://tezos.gitlab.io/mainnet/api/rpc.html#get-network-connections
+// GetNetworkConnections returns all network connections
+// https://tezos.gitlab.io/api/rpc.html#get-network-connections
 func (s *Service) GetNetworkConnections(ctx context.Context) ([]*NetworkConnection, error) {
 	req, err := s.Client.NewRequest(ctx, http.MethodGet, "/network/connections", nil)
 	if err != nil {
@@ -222,7 +223,7 @@ func (s *Service) GetNetworkConnections(ctx context.Context) ([]*NetworkConnecti
 }
 
 // GetNetworkPeers returns the list the peers the node ever met.
-// https://tezos.gitlab.io/mainnet/api/rpc.html#get-network-peers
+// https://tezos.gitlab.io/api/rpc.html#get-network-peers
 func (s *Service) GetNetworkPeers(ctx context.Context, filter string) ([]*NetworkPeer, error) {
 	u := url.URL{
 		Path: "/network/peers",
@@ -254,7 +255,7 @@ func (s *Service) GetNetworkPeers(ctx context.Context, filter string) ([]*Networ
 }
 
 // GetNetworkPeer returns details about a given peer.
-// https://tezos.gitlab.io/mainnet/api/rpc.html#get-network-peers-peer-id
+// https://tezos.gitlab.io/api/rpc.html#get-network-peers-peer-id
 func (s *Service) GetNetworkPeer(ctx context.Context, peerID string) (*NetworkPeer, error) {
 	req, err := s.Client.NewRequest(ctx, http.MethodGet, "/network/peers/"+peerID, nil)
 	if err != nil {
@@ -271,7 +272,7 @@ func (s *Service) GetNetworkPeer(ctx context.Context, peerID string) (*NetworkPe
 }
 
 // BanNetworkPeer blacklists the given peer.
-// https://tezos.gitlab.io/mainnet/api/rpc.html#get-network-peers-peer-id-ban
+// https://tezos.gitlab.io/api/rpc.html#get-network-peers-peer-id-ban
 func (s *Service) BanNetworkPeer(ctx context.Context, peerID string) error {
 	req, err := s.Client.NewRequest(ctx, http.MethodGet, "/network/peers/"+peerID+"/ban", nil)
 	if err != nil {
@@ -285,7 +286,7 @@ func (s *Service) BanNetworkPeer(ctx context.Context, peerID string) error {
 }
 
 // TrustNetworkPeer used to trust a given peer permanently: the peer cannot be blocked (but its host IP still can).
-// https://tezos.gitlab.io/mainnet/api/rpc.html#get-network-peers-peer-id-trust
+// https://tezos.gitlab.io/api/rpc.html#get-network-peers-peer-id-trust
 func (s *Service) TrustNetworkPeer(ctx context.Context, peerID string) error {
 	req, err := s.Client.NewRequest(ctx, http.MethodGet, "/network/peers/"+peerID+"/trust", nil)
 	if err != nil {
@@ -299,7 +300,7 @@ func (s *Service) TrustNetworkPeer(ctx context.Context, peerID string) error {
 }
 
 // GetNetworkPeerBanned checks if a given peer is blacklisted or greylisted.
-// https://tezos.gitlab.io/mainnet/api/rpc.html#get-network-peers-peer-id-banned
+// https://tezos.gitlab.io/api/rpc.html#get-network-peers-peer-id-banned
 func (s *Service) GetNetworkPeerBanned(ctx context.Context, peerID string) (bool, error) {
 	req, err := s.Client.NewRequest(ctx, http.MethodGet, "/network/peers/"+peerID+"/banned", nil)
 	if err != nil {
@@ -315,7 +316,7 @@ func (s *Service) GetNetworkPeerBanned(ctx context.Context, peerID string) (bool
 }
 
 // GetNetworkPeerLog monitors network events related to a given peer.
-// https://tezos.gitlab.io/mainnet/api/rpc.html#get-network-peers-peer-id-log
+// https://tezos.gitlab.io/api/rpc.html#get-network-peers-peer-id-log
 func (s *Service) GetNetworkPeerLog(ctx context.Context, peerID string) ([]*NetworkPeerLogEntry, error) {
 	req, err := s.Client.NewRequest(ctx, http.MethodGet, "/network/peers/"+peerID+"/log", nil)
 	if err != nil {
@@ -331,7 +332,7 @@ func (s *Service) GetNetworkPeerLog(ctx context.Context, peerID string) ([]*Netw
 }
 
 // MonitorNetworkPeerLog monitors network events related to a given peer.
-// https://tezos.gitlab.io/mainnet/api/rpc.html#get-network-peers-peer-id-log
+// https://tezos.gitlab.io/api/rpc.html#get-network-peers-peer-id-log
 func (s *Service) MonitorNetworkPeerLog(ctx context.Context, peerID string, results chan<- []*NetworkPeerLogEntry) error {
 	req, err := s.Client.NewRequest(ctx, http.MethodGet, "/network/peers/"+peerID+"/log?monitor", nil)
 	if err != nil {
@@ -342,7 +343,7 @@ func (s *Service) MonitorNetworkPeerLog(ctx context.Context, peerID string, resu
 }
 
 // GetNetworkPoints returns list the pool of known `IP:port` used for establishing P2P connections.
-// https://tezos.gitlab.io/mainnet/api/rpc.html#get-network-points
+// https://tezos.gitlab.io/api/rpc.html#get-network-points
 func (s *Service) GetNetworkPoints(ctx context.Context, filter string) ([]*NetworkPoint, error) {
 	u := url.URL{
 		Path: "/network/points",
@@ -374,7 +375,7 @@ func (s *Service) GetNetworkPoints(ctx context.Context, filter string) ([]*Netwo
 }
 
 // GetNetworkPoint returns details about a given `IP:addr`.
-// https://tezos.gitlab.io/mainnet/api/rpc.html#get-network-points-point
+// https://tezos.gitlab.io/api/rpc.html#get-network-points-point
 func (s *Service) GetNetworkPoint(ctx context.Context, address string) (*NetworkPoint, error) {
 	req, err := s.Client.NewRequest(ctx, http.MethodGet, "/network/points/"+address, nil)
 	if err != nil {
@@ -391,7 +392,7 @@ func (s *Service) GetNetworkPoint(ctx context.Context, address string) (*Network
 }
 
 // ConnectToNetworkPoint used to connect to a peer.
-// https://tezos.gitlab.io/mainnet/api/rpc.html#put-network-points-point
+// https://tezos.gitlab.io/api/rpc.html#put-network-points-point
 func (s *Service) ConnectToNetworkPoint(ctx context.Context, address string, timeout time.Duration) error {
 	u := url.URL{
 		Path: "/network/points/" + address,
@@ -417,7 +418,7 @@ func (s *Service) ConnectToNetworkPoint(ctx context.Context, address string, tim
 }
 
 // BanNetworkPoint blacklists the given address.
-// https://tezos.gitlab.io/mainnet/api/rpc.html#get-network-points-point-ban
+// https://tezos.gitlab.io/api/rpc.html#get-network-points-point-ban
 func (s *Service) BanNetworkPoint(ctx context.Context, address string) error {
 	req, err := s.Client.NewRequest(ctx, http.MethodGet, "/network/points/"+address+"/ban", nil)
 	if err != nil {
@@ -431,7 +432,7 @@ func (s *Service) BanNetworkPoint(ctx context.Context, address string) error {
 }
 
 // TrustNetworkPoint used to trust a given address permanently. Connections from this address can still be closed on authentication if the peer is blacklisted or greylisted.
-// https://tezos.gitlab.io/mainnet/api/rpc.html#get-network-points-point-trust
+// https://tezos.gitlab.io/api/rpc.html#get-network-points-point-trust
 func (s *Service) TrustNetworkPoint(ctx context.Context, address string) error {
 	req, err := s.Client.NewRequest(ctx, http.MethodGet, "/network/points/"+address+"/trust", nil)
 	if err != nil {
@@ -445,7 +446,7 @@ func (s *Service) TrustNetworkPoint(ctx context.Context, address string) error {
 }
 
 // GetNetworkPointBanned check is a given address is blacklisted or greylisted.
-// https://tezos.gitlab.io/mainnet/api/rpc.html#get-network-points-point-banned
+// https://tezos.gitlab.io/api/rpc.html#get-network-points-point-banned
 func (s *Service) GetNetworkPointBanned(ctx context.Context, address string) (bool, error) {
 	req, err := s.Client.NewRequest(ctx, http.MethodGet, "/network/points/"+address+"/banned", nil)
 	if err != nil {
@@ -461,7 +462,7 @@ func (s *Service) GetNetworkPointBanned(ctx context.Context, address string) (bo
 }
 
 // GetNetworkPointLog monitors network events related to an `IP:addr`.
-// https://tezos.gitlab.io/mainnet/api/rpc.html#get-network-peers-peer-id-log
+// https://tezos.gitlab.io/api/rpc.html#get-network-peers-peer-id-log
 func (s *Service) GetNetworkPointLog(ctx context.Context, address string) ([]*NetworkPointLogEntry, error) {
 	req, err := s.Client.NewRequest(ctx, http.MethodGet, "/network/points/"+address+"/log", nil)
 	if err != nil {
@@ -477,7 +478,7 @@ func (s *Service) GetNetworkPointLog(ctx context.Context, address string) ([]*Ne
 }
 
 // MonitorNetworkPointLog monitors network events related to an `IP:addr`.
-// https://tezos.gitlab.io/mainnet/api/rpc.html#get-network-peers-peer-id-log
+// https://tezos.gitlab.io/api/rpc.html#get-network-peers-peer-id-log
 func (s *Service) MonitorNetworkPointLog(ctx context.Context, address string, results chan<- []*NetworkPointLogEntry) error {
 	req, err := s.Client.NewRequest(ctx, http.MethodGet, "/network/points/"+address+"/log?monitor", nil)
 	if err != nil {
@@ -487,7 +488,8 @@ func (s *Service) MonitorNetworkPointLog(ctx context.Context, address string, re
 	return s.Client.Do(req, results)
 }
 
-// GetDelegateBalance returns a delegate's balance http://tezos.gitlab.io/mainnet/api/rpc.html#get-block-id-context-delegates-pkh-balance
+// GetDelegateBalance returns a delegate's balance
+// https://tezos.gitlab.io/api/rpc.html#get-block-id-context-delegates-pkh-balance
 func (s *Service) GetDelegateBalance(ctx context.Context, chainID string, blockID string, pkh string) (*big.Int, error) {
 	u := "/chains/" + chainID + "/blocks/" + blockID + "/context/delegates/" + pkh + "/balance"
 	req, err := s.Client.NewRequest(ctx, http.MethodGet, u, nil)
@@ -503,7 +505,8 @@ func (s *Service) GetDelegateBalance(ctx context.Context, chainID string, blockI
 	return (*big.Int)(&balance.Int), nil
 }
 
-// GetContractBalance returns a contract's balance http://tezos.gitlab.io/mainnet/api/rpc.html#get-block-id-context-contracts-contract-id-balance
+// GetContractBalance returns a contract's balance
+// https://tezos.gitlab.io/api/rpc.html#get-block-id-context-contracts-contract-id-balance
 func (s *Service) GetContractBalance(ctx context.Context, chainID string, blockID string, contractID string) (*big.Int, error) {
 	u := "/chains/" + chainID + "/blocks/" + blockID + "/context/contracts/" + contractID + "/balance"
 	req, err := s.Client.NewRequest(ctx, http.MethodGet, u, nil)
@@ -519,7 +522,8 @@ func (s *Service) GetContractBalance(ctx context.Context, chainID string, blockI
 	return (*big.Int)(&balance.Int), nil
 }
 
-// MonitorBootstrapped reads from the bootstrapped blocks stream http://tezos.gitlab.io/mainnet/api/rpc.html#get-monitor-bootstrapped
+// MonitorBootstrapped reads from the bootstrapped blocks stream
+// https://tezos.gitlab.io/api/rpc.html#get-monitor-bootstrapped
 func (s *Service) MonitorBootstrapped(ctx context.Context, results chan<- *BootstrappedBlock) error {
 	req, err := s.Client.NewRequest(ctx, http.MethodGet, "/monitor/bootstrapped", nil)
 	if err != nil {
@@ -529,7 +533,7 @@ func (s *Service) MonitorBootstrapped(ctx context.Context, results chan<- *Boots
 	return s.Client.Do(req, results)
 }
 
-// MonitorHeads reads from the heads blocks stream https://tezos.gitlab.io/mainnet/api/rpc.html#get-monitor-heads-chain-id
+// MonitorHeads reads from the heads blocks stream https://tezos.gitlab.io/api/rpc.html#get-monitor-heads-chain-id
 func (s *Service) MonitorHeads(ctx context.Context, chainID string, results chan<- *BlockInfo) error {
 	req, err := s.Client.NewRequest(ctx, http.MethodGet, "/monitor/heads/"+chainID, nil)
 	if err != nil {
@@ -570,7 +574,7 @@ func (s *Service) MonitorMempoolOperations(ctx context.Context, chainID, filter 
 }
 
 // GetInvalidBlocks lists blocks that have been declared invalid along with the errors that led to them being declared invalid.
-// https://tezos.gitlab.io/alphanet/api/rpc.html#get-chains-chain-id-invalid-blocks
+// https://tezos.gitlab.io/api/rpc.html#get-chains-chain-id-invalid-blocks
 func (s *Service) GetInvalidBlocks(ctx context.Context, chainID string) ([]*InvalidBlock, error) {
 	req, err := s.Client.NewRequest(ctx, http.MethodGet, "/chains/"+chainID+"/invalid_blocks", nil)
 	if err != nil {
@@ -586,7 +590,7 @@ func (s *Service) GetInvalidBlocks(ctx context.Context, chainID string) ([]*Inva
 }
 
 // GetBlock returns information about a Tezos block
-// https://tezos.gitlab.io/alphanet/api/rpc.html#get-block-id
+// https://tezos.gitlab.io/api/rpc.html#get-block-id
 func (s *Service) GetBlock(ctx context.Context, chainID, blockID string) (*Block, error) {
 	req, err := s.Client.NewRequest(ctx, http.MethodGet, "/chains/"+chainID+"/blocks/"+blockID, nil)
 	if err != nil {
@@ -602,7 +606,7 @@ func (s *Service) GetBlock(ctx context.Context, chainID, blockID string) (*Block
 }
 
 // GetBallotList returns ballots casted so far during a voting period.
-// https://tezos.gitlab.io/alphanet/api/rpc.html#get-block-id-votes-ballot-list
+// https://tezos.gitlab.io/api/rpc.html#get-block-id-votes-ballot-list
 func (s *Service) GetBallotList(ctx context.Context, chainID, blockID string) ([]*Ballot, error) {
 	req, err := s.Client.NewRequest(ctx, http.MethodGet, "/chains/"+chainID+"/blocks/"+blockID+"/votes/ballot_list", nil)
 	if err != nil {
@@ -618,7 +622,7 @@ func (s *Service) GetBallotList(ctx context.Context, chainID, blockID string) ([
 }
 
 // GetBallots returns sum of ballots casted so far during a voting period.
-// https://tezos.gitlab.io/alphanet/api/rpc.html#get-block-id-votes-ballots
+// https://tezos.gitlab.io/api/rpc.html#get-block-id-votes-ballots
 func (s *Service) GetBallots(ctx context.Context, chainID, blockID string) (*Ballots, error) {
 	req, err := s.Client.NewRequest(ctx, http.MethodGet, "/chains/"+chainID+"/blocks/"+blockID+"/votes/ballots", nil)
 	if err != nil {
@@ -634,7 +638,7 @@ func (s *Service) GetBallots(ctx context.Context, chainID, blockID string) (*Bal
 }
 
 // GetBallotListings returns a list of delegates with their voting weight, in number of rolls.
-// https://tezos.gitlab.io/alphanet/api/rpc.html#get-block-id-votes-listings
+// https://tezos.gitlab.io/api/rpc.html#get-block-id-votes-listings
 func (s *Service) GetBallotListings(ctx context.Context, chainID, blockID string) ([]*BallotListing, error) {
 	req, err := s.Client.NewRequest(ctx, http.MethodGet, "/chains/"+chainID+"/blocks/"+blockID+"/votes/listings", nil)
 	if err != nil {
@@ -650,7 +654,7 @@ func (s *Service) GetBallotListings(ctx context.Context, chainID, blockID string
 }
 
 // GetProposals returns a list of proposals with number of supporters.
-// https://tezos.gitlab.io/alphanet/api/rpc.html#get-block-id-votes-proposals
+// https://tezos.gitlab.io/api/rpc.html#get-block-id-votes-proposals
 func (s *Service) GetProposals(ctx context.Context, chainID, blockID string) ([]*Proposal, error) {
 	req, err := s.Client.NewRequest(ctx, http.MethodGet, "/chains/"+chainID+"/blocks/"+blockID+"/votes/proposals", nil)
 	if err != nil {
@@ -687,7 +691,7 @@ func (s *Service) GetProposals(ctx context.Context, chainID, blockID string) ([]
 }
 
 // GetCurrentProposals returns the current proposal under evaluation.
-// https://tezos.gitlab.io/alphanet/api/rpc.html#get-block-id-votes-current-proposal
+// https://tezos.gitlab.io/api/rpc.html#get-block-id-votes-current-proposal
 func (s *Service) GetCurrentProposals(ctx context.Context, chainID, blockID string) (string, error) {
 	req, err := s.Client.NewRequest(ctx, http.MethodGet, "/chains/"+chainID+"/blocks/"+blockID+"/votes/current_proposal", nil)
 	if err != nil {
@@ -703,7 +707,7 @@ func (s *Service) GetCurrentProposals(ctx context.Context, chainID, blockID stri
 }
 
 // GetCurrentQuorum returns the current expected quorum.
-// https://tezos.gitlab.io/alphanet/api/rpc.html#get-block-id-votes-current-quorum
+// https://tezos.gitlab.io/api/rpc.html#get-block-id-votes-current-quorum
 func (s *Service) GetCurrentQuorum(ctx context.Context, chainID, blockID string) (int, error) {
 	req, err := s.Client.NewRequest(ctx, http.MethodGet, "/chains/"+chainID+"/blocks/"+blockID+"/votes/current_quorum", nil)
 	if err != nil {
@@ -719,7 +723,7 @@ func (s *Service) GetCurrentQuorum(ctx context.Context, chainID, blockID string)
 }
 
 // GetCurrentPeriodKind returns the current period kind
-// https://tezos.gitlab.io/alphanet/api/rpc.html#get-block-id-votes-current-period-kind
+// https://tezos.gitlab.io/api/rpc.html#get-block-id-votes-current-period-kind
 func (s *Service) GetCurrentPeriodKind(ctx context.Context, chainID, blockID string) (PeriodKind, error) {
 	req, err := s.Client.NewRequest(ctx, http.MethodGet, "/chains/"+chainID+"/blocks/"+blockID+"/votes/current_period_kind", nil)
 	if err != nil {
